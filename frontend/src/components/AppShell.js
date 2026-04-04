@@ -3,12 +3,117 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useThemeMode } from "../context/ThemeContext";
 
 const mobileNavItems = [
-  { to: "/charts", label: "Charts", icon: "CH" },
-  { to: "/calendar", label: "Calendar", icon: "CA" },
-  { to: "/add-trade", label: "Add Trade", icon: "+" },
-  { to: "/journal", label: "Journal", icon: "JR" },
-  { to: "/settings", label: "Settings", icon: "ST" },
+  { to: "/charts", label: "Charts", icon: "charts" },
+  { to: "/calendar", label: "Calendar", icon: "calendar" },
+  { to: "/add-trade", label: "Add Trade", icon: "add" },
+  { to: "/journal", label: "Journal", icon: "journal" },
+  { to: "/settings", label: "Settings", icon: "settings" },
 ];
+
+function IconBase({ children, size = 18, strokeWidth = 1.8 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ display: "block" }}
+    >
+      <g
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {children}
+      </g>
+    </svg>
+  );
+}
+
+function MenuIcon({ size = 20 }) {
+  return (
+    <IconBase size={size}>
+      <path d="M4 7H20" />
+      <path d="M4 12H20" />
+      <path d="M4 17H20" />
+    </IconBase>
+  );
+}
+
+function ChartsIcon({ size = 18 }) {
+  return (
+    <IconBase size={size}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4V12L18 15" />
+      <path d="M9 12A3 3 0 0 1 12 9" />
+    </IconBase>
+  );
+}
+
+function CalendarIcon({ size = 18 }) {
+  return (
+    <IconBase size={size}>
+      <rect x="4" y="5" width="16" height="15" rx="3" />
+      <path d="M8 3V7" />
+      <path d="M16 3V7" />
+      <path d="M4 10H20" />
+      <path d="M8 14H8.01" />
+      <path d="M12 14H12.01" />
+      <path d="M16 14H16.01" />
+    </IconBase>
+  );
+}
+
+function AddTradeIcon({ size = 18 }) {
+  return (
+    <IconBase size={size}>
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="M12 8V16" />
+      <path d="M8 12H16" />
+    </IconBase>
+  );
+}
+
+function JournalIcon({ size = 18 }) {
+  return (
+    <IconBase size={size}>
+      <path d="M7 4.5H17A2.5 2.5 0 0 1 19.5 7V19H8.5A2.5 2.5 0 0 0 6 21.5V7A2.5 2.5 0 0 1 8.5 4.5" />
+      <path d="M8 8H16" />
+      <path d="M8 12H16" />
+      <path d="M8 16H13" />
+    </IconBase>
+  );
+}
+
+function SettingsIcon({ size = 18 }) {
+  return (
+    <IconBase size={size}>
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M12 3.5V5.2" />
+      <path d="M12 18.8V20.5" />
+      <path d="M20.5 12H18.8" />
+      <path d="M5.2 12H3.5" />
+      <path d="M17.8 6.2L16.6 7.4" />
+      <path d="M7.4 16.6L6.2 17.8" />
+      <path d="M17.8 17.8L16.6 16.6" />
+      <path d="M7.4 7.4L6.2 6.2" />
+    </IconBase>
+  );
+}
+
+function getNavIcon(icon, isActive) {
+  const size = isActive ? 19 : 18;
+
+  if (icon === "charts") return <ChartsIcon size={size} />;
+  if (icon === "calendar") return <CalendarIcon size={size} />;
+  if (icon === "add") return <AddTradeIcon size={size} />;
+  if (icon === "journal") return <JournalIcon size={size} />;
+  if (icon === "settings") return <SettingsIcon size={size} />;
+  return <IconBase size={size}><circle cx="12" cy="12" r="7" /></IconBase>;
+}
 
 function AppShell({ title, subtitle, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,14 +211,15 @@ function AppShell({ title, subtitle, children }) {
                 border: "1px solid color-mix(in srgb, var(--app-nav) 85%, white 15%)",
                 background: "linear-gradient(135deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 72%, var(--app-primary) 28%) 100%)",
                 color: "#ffffff",
-                fontSize: "18px",
                 cursor: "pointer",
                 flexShrink: 0,
                 boxShadow: "var(--app-shadow-nav)",
+                display: "grid",
+                placeItems: "center",
               }}
               aria-label="Open navigation"
             >
-              Menu
+              <MenuIcon />
             </button>
 
             <div style={{ minWidth: 0, padding: "4px 0" }}>
@@ -477,8 +583,8 @@ function AppShell({ title, subtitle, children }) {
                   fontWeight: 700,
                 }}
               >
-                <span style={{ fontSize: item.to === "/add-trade" ? "20px" : "16px", lineHeight: 1 }}>
-                  {item.icon}
+                <span style={{ lineHeight: 1, display: "grid", placeItems: "center" }}>
+                  {getNavIcon(item.icon, isActive)}
                 </span>
                 <span style={{ fontSize: "11px", lineHeight: 1.1 }}>{item.label}</span>
               </div>
