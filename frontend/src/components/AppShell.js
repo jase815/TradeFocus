@@ -4,6 +4,7 @@ import { useThemeMode } from "../context/ThemeContext";
 
 function AppShell({ title, subtitle, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const location = useLocation();
   const navigate = useNavigate();
   const { themeMode, toggleThemeMode } = useThemeMode();
@@ -11,6 +12,15 @@ function AppShell({ title, subtitle, children }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -34,24 +44,32 @@ function AppShell({ title, subtitle, children }) {
 
   return (
     <div
+      className="app-shell"
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%)",
+        background:
+          "linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%)",
         color: "var(--app-text)",
         fontFamily: "Arial, sans-serif",
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "hidden",
       }}
     >
       <div
+        className="app-shell-header"
         style={{
-          position: "sticky",
-          top: 0,
+          position: isMobile ? "static" : "sticky",
+          top: isMobile ? "auto" : 0,
           zIndex: 50,
           background: "var(--app-surface)",
           backdropFilter: "blur(16px)",
-          borderBottom: "1px solid color-mix(in srgb, var(--app-card-border) 70%, transparent)",
+          borderBottom:
+            "1px solid color-mix(in srgb, var(--app-card-border) 70%, transparent)",
         }}
       >
         <div
+          className="app-shell-header-inner"
           style={{
             maxWidth: "1200px",
             margin: "0 auto",
@@ -64,6 +82,7 @@ function AppShell({ title, subtitle, children }) {
           }}
         >
           <div
+            className="app-shell-topbar-left"
             style={{
               display: "flex",
               alignItems: "center",
@@ -81,7 +100,8 @@ function AppShell({ title, subtitle, children }) {
                 height: "46px",
                 borderRadius: "14px",
                 border: "1px solid color-mix(in srgb, var(--app-nav) 85%, white 15%)",
-                background: "linear-gradient(135deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 72%, var(--app-primary) 28%) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 72%, var(--app-primary) 28%) 100%)",
                 color: "#ffffff",
                 fontSize: "18px",
                 cursor: "pointer",
@@ -95,6 +115,7 @@ function AppShell({ title, subtitle, children }) {
 
             <div style={{ minWidth: 0, padding: "4px 0" }}>
               <div
+                className="app-shell-brand-chip"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -110,8 +131,8 @@ function AppShell({ title, subtitle, children }) {
                   textTransform: "uppercase",
                   border: "1px solid var(--app-primary-border)",
                   maxWidth: "100%",
-                  }}
-                >
+                }}
+              >
                 <img
                   src="/tradefocus-brand.png"
                   alt="TradeFocus logo"
@@ -120,7 +141,8 @@ function AppShell({ title, subtitle, children }) {
                     height: "20px",
                     borderRadius: "6px",
                     objectFit: "cover",
-                    boxShadow: "0 0 16px color-mix(in srgb, var(--app-primary) 35%, transparent)",
+                    boxShadow:
+                      "0 0 16px color-mix(in srgb, var(--app-primary) 35%, transparent)",
                   }}
                 />
                 TradeFocus
@@ -155,6 +177,7 @@ function AppShell({ title, subtitle, children }) {
           </div>
 
           <div
+            className="app-shell-topbar-right"
             style={{
               display: "flex",
               alignItems: "center",
@@ -171,7 +194,8 @@ function AppShell({ title, subtitle, children }) {
                 border: "1px solid var(--app-primary-border)",
                 borderRadius: "14px",
                 padding: "10px 14px",
-                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 color: "var(--app-text)",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -188,7 +212,8 @@ function AppShell({ title, subtitle, children }) {
                 border: "1px solid var(--app-primary-border)",
                 borderRadius: "14px",
                 padding: "10px 14px",
-                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 color: "var(--app-text)",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -205,7 +230,8 @@ function AppShell({ title, subtitle, children }) {
                 gap: "10px",
                 padding: "10px 14px",
                 borderRadius: "16px",
-                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 border: "1px solid var(--app-card-border)",
                 boxShadow: "var(--app-shadow-soft)",
                 minWidth: 0,
@@ -273,7 +299,8 @@ function AppShell({ title, subtitle, children }) {
               width: "300px",
               maxWidth: "88vw",
               height: "100vh",
-              background: "linear-gradient(180deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 82%, var(--app-primary) 18%) 100%)",
+              background:
+                "linear-gradient(180deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 82%, var(--app-primary) 18%) 100%)",
               boxShadow: "var(--app-shadow-nav)",
               zIndex: 70,
               padding: "22px",
@@ -286,18 +313,19 @@ function AppShell({ title, subtitle, children }) {
                 marginBottom: "20px",
                 padding: "16px",
                 borderRadius: "var(--app-radius-lg)",
-                background: "linear-gradient(135deg, rgba(96,165,250,0.24) 0%, rgba(96,165,250,0.08) 100%)",
+                background:
+                  "linear-gradient(135deg, rgba(96,165,250,0.24) 0%, rgba(96,165,250,0.08) 100%)",
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   gap: "12px",
                   marginBottom: "10px",
-                  }}
-                >
+                }}
+              >
                 <img
                   src="/tradefocus-brand.png"
                   alt="TradeFocus logo"
@@ -346,7 +374,9 @@ function AppShell({ title, subtitle, children }) {
 
             <Link
               to="/charts"
-              style={navLinkStyle(location.pathname === "/" || location.pathname === "/charts")}
+              style={navLinkStyle(
+                location.pathname === "/" || location.pathname === "/charts"
+              )}
             >
               Charts
             </Link>
@@ -378,7 +408,8 @@ function AppShell({ title, subtitle, children }) {
                   border: "none",
                   borderRadius: "var(--app-radius-md)",
                   padding: "13px 14px",
-                  background: "linear-gradient(135deg, var(--app-danger) 0%, color-mix(in srgb, var(--app-danger) 86%, white 14%) 100%)",
+                  background:
+                    "linear-gradient(135deg, var(--app-danger) 0%, color-mix(in srgb, var(--app-danger) 86%, white 14%) 100%)",
                   color: "#ffffff",
                   fontWeight: "bold",
                   cursor: "pointer",
@@ -392,10 +423,14 @@ function AppShell({ title, subtitle, children }) {
       )}
 
       <div
+        className="app-shell-content"
         style={{
           maxWidth: "1200px",
           margin: "0 auto",
           padding: "24px clamp(14px, 3vw, 20px) 40px",
+          width: "100%",
+          boxSizing: "border-box",
+          overflowX: "hidden",
         }}
       >
         {children}
