@@ -19,8 +19,21 @@ function AuthPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-      setMessage(data.message || (res.ok ? "Signup worked" : "Signup failed"));
+      const text = await res.text();
+      let data = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) {
+        setMessage(data.message || "Signup failed");
+        return;
+      }
+
+      setMessage(data.message || "Signup worked");
     } catch (error) {
       console.error("signup error:", error);
       setMessage("Signup crashed");
@@ -35,7 +48,19 @@ function AuthPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) {
+        setMessage(data.message || "Login failed");
+        return;
+      }
 
       if (data.token) {
         localStorage.setItem("token", data.token);
