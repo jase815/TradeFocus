@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles";
 import AuthCard from "../components/AuthCard";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,11 +13,12 @@ function AuthPage() {
 
   const handleSignup = async () => {
     try {
-      const res = await fetch("http://localhost:5000/signup", {
+      const res = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
       setMessage(data.message || (res.ok ? "Signup worked" : "Signup failed"));
     } catch (error) {
@@ -26,15 +29,17 @@ function AuthPage() {
 
   const handleLogin = async () => {
     try {
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
 
       if (data.token) {
         localStorage.setItem("token", data.token);
+        setMessage("Login successful");
         navigate("/");
       } else {
         setMessage(data.message || "Login failed");
@@ -68,12 +73,16 @@ function AuthPage() {
               }}
             />
             <h1 style={styles.title}>TradeFocus</h1>
-            <p style={styles.subtitle}>Login or create your account to access your dashboard.</p>
+            <p style={styles.subtitle}>
+              Login or create your account to access your dashboard.
+            </p>
           </div>
         </div>
 
         <div style={{ ...styles.card, maxWidth: "520px", margin: "0 auto" }}>
-          <div style={{ marginBottom: "12px", color: "var(--app-text)" }}>{message || "Welcome"}</div>
+          <div style={{ marginBottom: "12px", color: "var(--app-text)" }}>
+            {message || "Welcome"}
+          </div>
 
           <AuthCard
             email={email}
