@@ -27,6 +27,8 @@ app.use(
 
       const allowedOrigins = [
         "http://localhost:3000",
+        "https://tradefocus.org",
+        "https://www.tradefocus.org",
         "https://trade-focus.vercel.app",
       ];
 
