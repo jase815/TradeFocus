@@ -9,11 +9,17 @@ function useIsMobile(breakpoint = 767) {
   const [isMobile, setIsMobile] = useState(getMatches);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(getMatches());
+  const getMatches = () => {
+    return window.matchMedia("(max-width: 768px)").matches;
+  };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [breakpoint]);
+  const handleChange = () => setIsMobile(getMatches());
+
+  handleChange();
+  window.addEventListener("resize", handleChange);
+
+  return () => window.removeEventListener("resize", handleChange);
+}, []);
 
   return isMobile;
 }

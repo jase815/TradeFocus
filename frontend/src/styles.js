@@ -10,7 +10,6 @@ const styles = {
   },
 
   container: {
-    maxWidth: "1100px",
     margin: "0 auto",
     width: "100%",
     maxWidth: "100%",
