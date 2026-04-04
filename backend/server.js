@@ -32,13 +32,14 @@ app.use(
         "https://trade-focus.vercel.app",
       ];
 
-      const isVercelPreview = origin.endsWith(".vercel.app");
-
-      if (allowedOrigins.includes(origin) || isVercelPreview) {
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
   })
