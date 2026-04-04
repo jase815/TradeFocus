@@ -274,12 +274,14 @@ function TradeForm({
 
   return (
     <div
+      className="trade-form-shell"
       style={{
         ...styles.card,
         padding: "clamp(16px, 3vw, 20px)",
       }}
     >
       <div
+        className="trade-form-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -331,6 +333,7 @@ function TradeForm({
       </div>
 
       <div
+        className="trade-form-summary"
         style={{
           marginBottom: "16px",
           padding: "14px",
@@ -406,6 +409,7 @@ function TradeForm({
         </div>
 
         <div
+          className="trade-form-upload"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={() => setIsDragActive(false)}
@@ -492,6 +496,7 @@ function TradeForm({
 
         {screenshotPreview && keepScreenshot ? (
           <div
+            className="trade-form-preview"
             style={{
               marginTop: "12px",
               border: "1px solid var(--app-card-border)",
@@ -502,6 +507,7 @@ function TradeForm({
             }}
           >
             <div
+              className="trade-form-preview-frame"
               style={{
                 width: "100%",
                 height: "min(54vw, 280px)",
@@ -583,24 +589,26 @@ function TradeForm({
               </div>
 
               <div style={styles.buttonRow}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCropZoom(1);
-                    setCropX(0);
-                    setCropY(0);
-                  }}
-                  style={styles.ghostButton}
-                >
-                  Reset Crop
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  style={styles.secondaryButton}
-                >
-                  Replace Screenshot
-                </button>
+                <div className="trade-form-action-row" style={{ ...styles.buttonRow, width: "100%" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCropZoom(1);
+                      setCropX(0);
+                      setCropY(0);
+                    }}
+                    style={styles.ghostButton}
+                  >
+                    Reset Crop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={styles.secondaryButton}
+                  >
+                    Replace Screenshot
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -710,7 +718,7 @@ function TradeForm({
         }}
       />
 
-      <div style={styles.buttonRow}>
+      <div className="trade-form-action-row" style={styles.buttonRow}>
         {isEditing ? (
           <>
             <button onClick={updateTrade} style={styles.primaryButton}>
@@ -720,11 +728,11 @@ function TradeForm({
               Cancel
             </button>
           </>
-        ) : (
-          <button onClick={addTrade} style={styles.primaryButton}>
-            Add Trade
-          </button>
-        )}
+          ) : (
+            <button onClick={addTrade} style={styles.primaryButton}>
+              Add Trade
+            </button>
+          )}
       </div>
 
       <div style={{ marginTop: "16px" }}>
@@ -788,7 +796,7 @@ function TradeForm({
             </div>
           )}
 
-          <div style={styles.buttonRow}>
+          <div className="trade-form-action-row" style={styles.buttonRow}>
             <button type="button" onClick={loadPreset} style={styles.secondaryButton}>
               Load Preset
             </button>

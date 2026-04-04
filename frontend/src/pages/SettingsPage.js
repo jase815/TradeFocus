@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import AppShell from "../components/AppShell";
+import StatusBanner from "../components/StatusBanner";
 import styles from "../styles";
 import { useThemeMode } from "../context/ThemeContext";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const defaultSettings = {
   displayName: "",
@@ -93,7 +95,7 @@ function PreferenceToggle({ label, hint, checked, onChange }) {
 function SettingsPage() {
   const { themeMode, setThemeMode } = useThemeMode();
   const [settings, setSettings] = useState(defaultSettings);
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -107,8 +109,13 @@ function SettingsPage() {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token") || "";
+      setStatus({
+        tone: "info",
+        title: "Loading Settings",
+        message: "Pulling in your account preferences.",
+      });
 
+      const token = localStorage.getItem("token") || "";
       const res = await fetch(`${API_URL}/api/settings`, {
         method: "GET",
         headers: {
@@ -116,10 +123,10 @@ function SettingsPage() {
         },
       });
 
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok && data) {
-        const nextSettings = {
+        setSettings({
           displayName: data.displayName ?? "",
           broker: data.broker ?? "",
           platform: data.platform ?? "",
@@ -142,7 +149,7 @@ function SettingsPage() {
           timezone: data.timezone ?? "America/Chicago",
           currency: data.currency ?? "USD",
           notesTemplate: data.notesTemplate ?? "",
-          darkMode: typeof data.darkMode === "boolean" ? data.darkMode : false,
+          darkMode: typeof data.darkMode === "boolean" ? data.darkMode : themeMode === "dark",
           autoOpenJournalAfterSave:
             typeof data.autoOpenJournalAfterSave === "boolean"
               ? data.autoOpenJournalAfterSave
@@ -153,19 +160,40 @@ function SettingsPage() {
             typeof data.enableTradeReviewReminders === "boolean"
               ? data.enableTradeReviewReminders
               : false,
-        };
+        });
 
-        setSettings(nextSettings);
+        setStatus({
+          tone: "success",
+          title: "Settings Ready",
+          message: "Your saved preferences are loaded.",
+        });
       } else {
-        setMessage(data.message || "Could not load settings");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Settings",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not load your settings right now.",
+            context: "Settings",
+          }),
+        });
       }
     } catch (error) {
       console.error("fetch settings error:", error);
-      setMessage("Settings request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not load your settings right now.",
+          context: "Settings",
+        }),
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [themeMode]);
 
   useEffect(() => {
     fetchSettings();
@@ -182,7 +210,11 @@ function SettingsPage() {
   const saveSettings = async () => {
     try {
       setSaving(true);
-      setMessage("");
+      setStatus({
+        tone: "info",
+        title: "Saving Settings",
+        message: "Applying your latest preferences.",
+      });
 
       const token = localStorage.getItem("token") || "";
 
@@ -206,45 +238,60 @@ function SettingsPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Settings saved");
+        setStatus({
+          tone: "success",
+          title: "Settings Saved",
+          message: data.message || "Your settings have been updated.",
+        });
       } else {
-        setMessage(data.message || "Could not save settings");
+        setStatus({
+          tone: "error",
+          title: "Save Failed",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not save your settings right now.",
+            context: "Settings",
+          }),
+        });
       }
     } catch (error) {
       console.error("save settings error:", error);
-      setMessage("Save settings crashed");
+      setStatus({
+        tone: "error",
+        title: "Save Failed",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not save your settings right now.",
+          context: "Settings",
+        }),
+      });
     } finally {
       setSaving(false);
     }
   };
-
-  const messageTone =
-    message.toLowerCase().includes("could not") || message.toLowerCase().includes("crashed")
-      ? "var(--app-danger)"
-      : "var(--app-text)";
 
   return (
     <AppShell
       title="Settings"
       subtitle="Manage your journal defaults, visual theme, risk limits, and preferences."
     >
-      {message ? (
-        <div
-          style={{
-            ...styles.card,
-            marginBottom: "20px",
-            color: messageTone,
-          }}
-        >
-          {message}
-        </div>
-      ) : null}
+      <div style={{ marginBottom: "20px" }}>
+        <StatusBanner
+          tone={status.message ? status.tone : "info"}
+          title={status.title || "Settings"}
+          message={
+            status.message ||
+            "Update your defaults and workspace preferences here."
+          }
+        />
+      </div>
 
       {loading ? (
-        <div style={styles.card}>Loading settings...</div>
+        <div style={styles.card}>Loading your settings...</div>
       ) : (
         <>
           <div style={styles.mainGrid}>
@@ -408,7 +455,7 @@ function SettingsPage() {
           </div>
 
           <div style={{ marginTop: "8px" }}>
-            <button onClick={saveSettings} style={styles.primaryButton}>
+            <button onClick={saveSettings} style={styles.primaryButton} disabled={saving}>
               {saving ? "Saving..." : "Save Settings"}
             </button>
           </div>

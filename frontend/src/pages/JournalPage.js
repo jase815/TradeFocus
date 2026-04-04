@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import StatusBanner from "../components/StatusBanner";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -78,7 +80,8 @@ function formatMoney(value) {
 function JournalPage() {
   const navigate = useNavigate();
   const [trades, setTrades] = useState([]);
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
+  const [loading, setLoading] = useState(true);
   const [deletingTradeId, setDeletingTradeId] = useState("");
   const [filter, setFilter] = useState("all");
 
@@ -88,12 +91,19 @@ function JournalPage() {
 
   const fetchTrades = async () => {
     try {
+      setLoading(true);
+      setStatus({
+        tone: "info",
+        title: "Loading Journal",
+        message: "Pulling in your latest trades.",
+      });
+
       const token = localStorage.getItem("token") || "";
       const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
         const sorted = [...(Array.isArray(data) ? data : [])].sort((a, b) => {
@@ -102,12 +112,36 @@ function JournalPage() {
           return bDate - aDate;
         });
         setTrades(sorted);
+        setStatus({
+          tone: "success",
+          title: "Journal Ready",
+          message: "Your trade history is loaded.",
+        });
       } else {
-        setMessage(data.message || "Could not load journal");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Journal",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not load your journal right now.",
+            context: "Journal",
+          }),
+        });
       }
     } catch (error) {
       console.error("fetch journal error:", error);
-      setMessage("Journal request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not load your journal right now.",
+          context: "Journal",
+        }),
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,17 +154,38 @@ function JournalPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Trade deleted");
         setTrades((prev) => prev.filter((trade) => trade._id !== tradeId));
+        setStatus({
+          tone: "success",
+          title: "Trade Deleted",
+          message: data.message || "The trade has been removed from your journal.",
+        });
       } else {
-        setMessage(data.message || "Could not delete trade");
+        setStatus({
+          tone: "error",
+          title: "Delete Failed",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not delete that trade.",
+            context: "Trade",
+          }),
+        });
       }
     } catch (error) {
       console.error("delete trade error:", error);
-      setMessage("Delete trade crashed");
+      setStatus({
+        tone: "error",
+        title: "Delete Failed",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not delete that trade.",
+          context: "Trade",
+        }),
+      });
     } finally {
       setDeletingTradeId("");
     }
@@ -159,9 +214,20 @@ function JournalPage() {
 
   return (
     <AppShell title="Journal" subtitle="All of your trades in one place, newest first.">
+      <div style={{ marginBottom: "16px" }}>
+        <StatusBanner
+          tone={status.message ? status.tone : "info"}
+          title={status.title || "Journal"}
+          message={
+            status.message ||
+            "Review, edit, and manage your trade history from one clean feed."
+          }
+        />
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
         <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
-          Review, edit, filter, and manage your trade history.
+          Filter your trades, review screenshots, and jump back into edits quickly.
         </div>
 
         <button
@@ -193,15 +259,13 @@ function JournalPage() {
         <button type="button" onClick={() => setFilter("short")} style={filterButtonStyle("short")}>Short</button>
       </div>
 
-      {message ? (
-        <div style={{ background: "var(--app-card)", borderRadius: "18px", padding: "14px 18px", boxShadow: "var(--app-shadow-soft)", marginBottom: "20px", color: message.toLowerCase().includes("could not") || message.toLowerCase().includes("crashed") ? "var(--app-danger)" : "var(--app-text)" }}>
-          {message}
-        </div>
+      {loading ? (
+        <StatusBanner tone="info" title="Loading" message="Building your journal feed." compact />
       ) : null}
 
       {journalTrades.length === 0 ? (
         <div style={{ background: "var(--app-card)", borderRadius: "22px", padding: "28px", boxShadow: "var(--app-shadow-soft)", color: "var(--app-text-soft)", textAlign: "center" }}>
-          No trades found for this filter.
+          No trades found for this filter yet.
         </div>
       ) : (
         <div style={{ display: "grid", gap: "16px" }}>
@@ -213,10 +277,10 @@ function JournalPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
                   <div>
                     <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--app-text)", marginBottom: "4px" }}>
-                      {trade.symbol || "Trade"} • {(trade.direction || "").toUpperCase()}
+                      {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
                     </div>
                     <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
-                      {trade.tradeDate || "No date"} {trade.presetName ? `• ${trade.presetName}` : ""}
+                      {trade.tradeDate || "No date"} {trade.presetName ? `| ${trade.presetName}` : ""}
                     </div>
                   </div>
 
@@ -291,3 +355,5 @@ function JournalPage() {
 }
 
 export default JournalPage;
+
+

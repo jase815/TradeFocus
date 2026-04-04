@@ -18,7 +18,7 @@ function TradeList({
 }) {
   if (!trades.length) {
     return (
-      <div style={styles.card}>
+      <div className="trade-list-card" style={styles.card}>
         <h2 style={styles.cardTitle}>Trades</h2>
         <div style={styles.emptyState}>No trades yet</div>
       </div>
@@ -26,7 +26,7 @@ function TradeList({
   }
 
   return (
-    <div style={styles.card}>
+    <div className="trade-list-card" style={styles.card}>
       <div style={styles.tradesHeader}>
         <h2 style={{ ...styles.cardTitle, marginBottom: 0 }}>Trades</h2>
         <div style={{ fontSize: "13px", color: "var(--app-text-soft)" }}>Showing latest to oldest</div>
@@ -39,11 +39,11 @@ function TradeList({
 
           return (
             <div key={trade._id} style={styles.tradeCard}>
-              <div style={styles.tradeTopRow}>
+              <div className="trade-list-top-row" style={styles.tradeTopRow}>
                 <div>
-                  <div style={styles.tradeSymbol}>{trade.symbol || "Trade"} • {(trade.direction || "").toUpperCase()}</div>
+                  <div style={styles.tradeSymbol}>{trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}</div>
                   <div style={styles.tradeNote}>
-                    {trade.tradeDate || "No date"} {trade.presetName ? `• ${trade.presetName}` : ""}
+                    {trade.tradeDate || "No date"} {trade.presetName ? `| ${trade.presetName}` : ""}
                   </div>
                 </div>
 
@@ -58,7 +58,7 @@ function TradeList({
                 </div>
               </div>
 
-              <div style={styles.tradeMeta}>
+              <div className="trade-list-meta" style={styles.tradeMeta}>
                 <span>Entry: {trade.entry ?? "--"}</span>
                 <span>Exit: {trade.exit ?? "--"}</span>
                 <span>Contracts: {trade.contracts ?? "--"}</span>
@@ -107,8 +107,8 @@ function TradeList({
                 </div>
               ) : null}
 
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
-                <div style={styles.buttonRow}>
+              <div className="trade-list-action-row" style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                <div className="trade-form-action-row" style={styles.buttonRow}>
                   <button onClick={() => startEditTrade(trade)} style={styles.ghostButton}>
                     Edit
                   </button>
@@ -131,3 +131,5 @@ function TradeList({
 }
 
 export default TradeList;
+
+

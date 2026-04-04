@@ -9,6 +9,8 @@ function AuthCard({
   handleSignup,
   handleLogin,
   handleLogout,
+  isSubmitting = false,
+  activeAction = "",
 }) {
   const hasToken = !!localStorage.getItem("token");
 
@@ -16,8 +18,8 @@ function AuthCard({
     <div style={{ ...styles.card, maxWidth: "420px", margin: "0 auto" }}>
       <h2 style={styles.cardTitle}>Account</h2>
 
-      <div style={{ fontSize: "13px", color: "var(--app-text-soft)", marginBottom: "14px" }}>
-        {hasToken ? "You are currently logged in" : "Sign in or create an account to continue"}
+      <div style={{ fontSize: "13px", color: "var(--app-text-soft)", marginBottom: "14px", lineHeight: 1.55 }}>
+        {hasToken ? "You are currently logged in." : "Sign in or create an account to continue."}
       </div>
 
       <input
@@ -26,6 +28,7 @@ function AuthCard({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         style={styles.input}
+        disabled={isSubmitting}
       />
 
       <input
@@ -34,16 +37,25 @@ function AuthCard({
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         style={styles.input}
+        disabled={isSubmitting}
       />
 
       {!hasToken ? (
         <div style={styles.buttonRow}>
-          <button onClick={handleSignup} style={{ ...styles.primaryButton, flex: "1 1 160px" }}>
-            Sign Up
+          <button
+            onClick={handleSignup}
+            style={{ ...styles.primaryButton, flex: "1 1 160px", opacity: isSubmitting ? 0.72 : 1 }}
+            disabled={isSubmitting}
+          >
+            {activeAction === "signup" ? "Creating Account..." : "Sign Up"}
           </button>
 
-          <button onClick={handleLogin} style={{ ...styles.secondaryButton, flex: "1 1 160px" }}>
-            Login
+          <button
+            onClick={handleLogin}
+            style={{ ...styles.secondaryButton, flex: "1 1 160px", opacity: isSubmitting ? 0.72 : 1 }}
+            disabled={isSubmitting}
+          >
+            {activeAction === "login" ? "Signing In..." : "Login"}
           </button>
         </div>
       ) : (

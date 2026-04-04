@@ -1,9 +1,17 @@
 html {
   background: var(--app-bg);
+  width: 100%;
+  overflow-x: hidden;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
 }
 
 body {
@@ -16,10 +24,14 @@ body {
   background: linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%);
   color: var(--app-text);
   transition: background 180ms ease, color 180ms ease;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 code {
@@ -37,4 +49,177 @@ button {
 input::placeholder,
 textarea::placeholder {
   color: var(--app-text-muted);
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .app-shell-header {
+    position: static !important;
+  }
+
+  .app-shell-header-inner {
+    padding: 12px 14px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  .app-shell-topbar-left,
+  .app-shell-topbar-right {
+    flex: 1 1 100% !important;
+  }
+
+  .app-shell-topbar-right {
+    justify-content: flex-start !important;
+  }
+
+  .app-shell-topbar-right > :last-child {
+    display: none !important;
+  }
+
+  .app-shell-brand-chip {
+    margin-bottom: 6px !important;
+  }
+
+  .app-shell-content {
+    padding: 16px 12px 96px !important;
+  }
+
+  .mobile-bottom-nav {
+    display: grid !important;
+  }
+
+  .trade-form-shell {
+    padding: 14px !important;
+  }
+
+  .trade-form-preview {
+    padding: 12px !important;
+  }
+
+  .trade-form-upload {
+    padding: 14px !important;
+  }
+
+  .trade-form-preview-frame {
+    min-height: 180px !important;
+    height: min(56vw, 220px) !important;
+  }
+
+  .trade-form-action-row,
+  .trade-list-action-row,
+  .calendar-toolbar,
+  .calendar-legend,
+  .charts-trade-row {
+    gap: 8px !important;
+  }
+
+  .trade-form-action-row > *,
+  .trade-list-action-row > *,
+  .app-shell-topbar-right > * {
+    max-width: 100%;
+  }
+
+  .trade-form-action-row > *,
+  .app-shell-topbar-right > button,
+  .calendar-month-controls > * {
+    flex: 1 1 100%;
+  }
+
+  .trade-list-action-row {
+    justify-content: stretch !important;
+  }
+
+  .trade-list-action-row > .trade-form-action-row,
+  .trade-list-action-row > button {
+    width: 100%;
+  }
+
+  .trade-list-action-row > .trade-form-action-row > * {
+    flex: 1 1 140px;
+  }
+
+  .trade-form-header {
+    margin-bottom: 12px !important;
+  }
+
+  .trade-form-summary {
+    padding: 12px !important;
+  }
+
+  .dashboard-side-column {
+    gap: 16px !important;
+  }
+
+  .calendar-summary-grid,
+  .charts-summary-grid,
+  .charts-day-grid,
+  .charts-donut-grid {
+    gap: 12px !important;
+  }
+
+  .charts-donut-card,
+  .calendar-panel,
+  .charts-panel,
+  .trade-list-card {
+    border-radius: 20px !important;
+  }
+
+  .charts-donut-layout {
+    gap: 14px !important;
+    align-items: stretch !important;
+  }
+
+  .charts-donut-visual {
+    width: min(150px, 46vw) !important;
+    height: min(150px, 46vw) !important;
+    min-width: 140px !important;
+    min-height: 140px !important;
+    margin: 0 auto !important;
+  }
+
+  .charts-donut-center {
+    width: 62% !important;
+    height: 62% !important;
+  }
+
+  .charts-donut-legend {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .calendar-weekdays,
+  .calendar-days {
+    display: none !important;
+  }
+
+  .calendar-grid-scroll {
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .calendar-grid-inner {
+    min-width: 0 !important;
+  }
+
+  .calendar-month-controls {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .calendar-month-button {
+    flex: 1 1 0 !important;
+  }
+
+  .trade-list-top-row {
+    gap: 10px !important;
+  }
+
+  .trade-list-meta {
+    gap: 10px !important;
+  }
 }

@@ -2,81 +2,142 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles";
 import AuthCard from "../components/AuthCard";
+import StatusBanner from "../components/StatusBanner";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({
+    tone: "info",
+    title: "",
+    message: "",
+  });
+  const [activeAction, setActiveAction] = useState("");
   const navigate = useNavigate();
 
   const handleSignup = async () => {
     try {
+      setActiveAction("signup");
+      setStatus({
+        tone: "info",
+        title: "Creating Account",
+        message: "We're setting up your TradeFocus account now.",
+      });
+
       const res = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const text = await res.text();
-      let data = {};
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = {};
-      }
+      const data = await readResponsePayload(res);
 
       if (!res.ok) {
-        setMessage(data.message || "Signup failed");
+        setStatus({
+          tone: "error",
+          title: "Could Not Sign Up",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not create your account right now.",
+            context: "Signup",
+          }),
+        });
         return;
       }
 
-      setMessage(data.message || "Signup worked");
+      setStatus({
+        tone: "success",
+        title: "Account Ready",
+        message: data.message || "Your account has been created. You can sign in now.",
+      });
     } catch (error) {
       console.error("signup error:", error);
-      setMessage("Signup crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not create your account right now.",
+          context: "Signup",
+        }),
+      });
+    } finally {
+      setActiveAction("");
     }
   };
 
   const handleLogin = async () => {
     try {
+      setActiveAction("login");
+      setStatus({
+        tone: "info",
+        title: "Signing In",
+        message: "Checking your account details.",
+      });
+
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const text = await res.text();
-      let data = {};
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = {};
-      }
+      const data = await readResponsePayload(res);
 
       if (!res.ok) {
-        setMessage(data.message || "Login failed");
+        setStatus({
+          tone: "error",
+          title: "Login Failed",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not sign you in.",
+            context: "Login",
+          }),
+        });
         return;
       }
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        setMessage("Login successful");
+        setStatus({
+          tone: "success",
+          title: "Welcome Back",
+          message: "Login successful. Opening your dashboard now.",
+        });
         navigate("/");
       } else {
-        setMessage(data.message || "Login failed");
+        setStatus({
+          tone: "error",
+          title: "Login Failed",
+          message: data.message || "We could not sign you in.",
+        });
       }
     } catch (error) {
       console.error("login error:", error);
-      setMessage("Login crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not sign you in.",
+          context: "Login",
+        }),
+      });
+    } finally {
+      setActiveAction("");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setMessage("Logged out");
+    setStatus({
+      tone: "success",
+      title: "Logged Out",
+      message: "You have been signed out.",
+    });
   };
 
   return (
@@ -103,9 +164,13 @@ function AuthPage() {
           </div>
         </div>
 
-        <div style={{ ...styles.card, maxWidth: "520px", margin: "0 auto" }}>
-          <div style={{ marginBottom: "12px", color: "var(--app-text)" }}>
-            {message || "Welcome"}
+        <div style={{ maxWidth: "520px", margin: "0 auto", width: "100%" }}>
+          <div style={{ marginBottom: "16px" }}>
+            <StatusBanner
+              tone={status.message ? status.tone : "info"}
+              title={status.title || "Welcome"}
+              message={status.message || "Sign in to continue or create your account to get started."}
+            />
           </div>
 
           <AuthCard
@@ -116,6 +181,8 @@ function AuthPage() {
             handleSignup={handleSignup}
             handleLogin={handleLogin}
             handleLogout={handleLogout}
+            isSubmitting={!!activeAction}
+            activeAction={activeAction}
           />
         </div>
       </div>
@@ -124,3 +191,4 @@ function AuthPage() {
 }
 
 export default AuthPage;
+

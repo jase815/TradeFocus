@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useThemeMode } from "../context/ThemeContext";
 
+const mobileNavItems = [
+  { to: "/charts", label: "Charts", icon: "CH" },
+  { to: "/calendar", label: "Calendar", icon: "CA" },
+  { to: "/add-trade", label: "Add Trade", icon: "+" },
+  { to: "/journal", label: "Journal", icon: "JR" },
+  { to: "/settings", label: "Settings", icon: "ST" },
+];
+
 function AppShell({ title, subtitle, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const location = useLocation();
   const navigate = useNavigate();
   const { themeMode, toggleThemeMode } = useThemeMode();
@@ -13,14 +20,13 @@ function AppShell({ title, subtitle, children }) {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+  const activeMobileRoute = useMemo(() => {
+    if (location.pathname === "/" || location.pathname === "/charts") {
+      return "/charts";
+    }
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    return location.pathname;
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -47,8 +53,7 @@ function AppShell({ title, subtitle, children }) {
       className="app-shell"
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%)",
+        background: "linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%)",
         color: "var(--app-text)",
         fontFamily: "Arial, sans-serif",
         width: "100%",
@@ -59,13 +64,12 @@ function AppShell({ title, subtitle, children }) {
       <div
         className="app-shell-header"
         style={{
-          position: isMobile ? "static" : "sticky",
-          top: isMobile ? "auto" : 0,
+          position: "sticky",
+          top: 0,
           zIndex: 50,
           background: "var(--app-surface)",
           backdropFilter: "blur(16px)",
-          borderBottom:
-            "1px solid color-mix(in srgb, var(--app-card-border) 70%, transparent)",
+          borderBottom: "1px solid color-mix(in srgb, var(--app-card-border) 70%, transparent)",
         }}
       >
         <div
@@ -100,8 +104,7 @@ function AppShell({ title, subtitle, children }) {
                 height: "46px",
                 borderRadius: "14px",
                 border: "1px solid color-mix(in srgb, var(--app-nav) 85%, white 15%)",
-                background:
-                  "linear-gradient(135deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 72%, var(--app-primary) 28%) 100%)",
+                background: "linear-gradient(135deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 72%, var(--app-primary) 28%) 100%)",
                 color: "#ffffff",
                 fontSize: "18px",
                 cursor: "pointer",
@@ -110,7 +113,7 @@ function AppShell({ title, subtitle, children }) {
               }}
               aria-label="Open navigation"
             >
-              ≡
+              Menu
             </button>
 
             <div style={{ minWidth: 0, padding: "4px 0" }}>
@@ -141,8 +144,7 @@ function AppShell({ title, subtitle, children }) {
                     height: "20px",
                     borderRadius: "6px",
                     objectFit: "cover",
-                    boxShadow:
-                      "0 0 16px color-mix(in srgb, var(--app-primary) 35%, transparent)",
+                    boxShadow: "0 0 16px color-mix(in srgb, var(--app-primary) 35%, transparent)",
                   }}
                 />
                 TradeFocus
@@ -151,7 +153,7 @@ function AppShell({ title, subtitle, children }) {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "clamp(26px, 5vw, 30px)",
+                  fontSize: "clamp(24px, 5vw, 30px)",
                   color: "var(--app-text)",
                   lineHeight: 1.1,
                   fontWeight: 800,
@@ -194,8 +196,7 @@ function AppShell({ title, subtitle, children }) {
                 border: "1px solid var(--app-primary-border)",
                 borderRadius: "14px",
                 padding: "10px 14px",
-                background:
-                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 color: "var(--app-text)",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -212,8 +213,7 @@ function AppShell({ title, subtitle, children }) {
                 border: "1px solid var(--app-primary-border)",
                 borderRadius: "14px",
                 padding: "10px 14px",
-                background:
-                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 color: "var(--app-text)",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -230,8 +230,7 @@ function AppShell({ title, subtitle, children }) {
                 gap: "10px",
                 padding: "10px 14px",
                 borderRadius: "16px",
-                background:
-                  "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
                 border: "1px solid var(--app-card-border)",
                 boxShadow: "var(--app-shadow-soft)",
                 minWidth: 0,
@@ -299,8 +298,7 @@ function AppShell({ title, subtitle, children }) {
               width: "300px",
               maxWidth: "88vw",
               height: "100vh",
-              background:
-                "linear-gradient(180deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 82%, var(--app-primary) 18%) 100%)",
+              background: "linear-gradient(180deg, var(--app-nav) 0%, color-mix(in srgb, var(--app-nav) 82%, var(--app-primary) 18%) 100%)",
               boxShadow: "var(--app-shadow-nav)",
               zIndex: 70,
               padding: "22px",
@@ -313,8 +311,7 @@ function AppShell({ title, subtitle, children }) {
                 marginBottom: "20px",
                 padding: "16px",
                 borderRadius: "var(--app-radius-lg)",
-                background:
-                  "linear-gradient(135deg, rgba(96,165,250,0.24) 0%, rgba(96,165,250,0.08) 100%)",
+                background: "linear-gradient(135deg, rgba(96,165,250,0.24) 0%, rgba(96,165,250,0.08) 100%)",
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
@@ -374,9 +371,7 @@ function AppShell({ title, subtitle, children }) {
 
             <Link
               to="/charts"
-              style={navLinkStyle(
-                location.pathname === "/" || location.pathname === "/charts"
-              )}
+              style={navLinkStyle(location.pathname === "/" || location.pathname === "/charts")}
             >
               Charts
             </Link>
@@ -408,8 +403,7 @@ function AppShell({ title, subtitle, children }) {
                   border: "none",
                   borderRadius: "var(--app-radius-md)",
                   padding: "13px 14px",
-                  background:
-                    "linear-gradient(135deg, var(--app-danger) 0%, color-mix(in srgb, var(--app-danger) 86%, white 14%) 100%)",
+                  background: "linear-gradient(135deg, var(--app-danger) 0%, color-mix(in srgb, var(--app-danger) 86%, white 14%) 100%)",
                   color: "#ffffff",
                   fontWeight: "bold",
                   cursor: "pointer",
@@ -429,14 +423,73 @@ function AppShell({ title, subtitle, children }) {
           margin: "0 auto",
           padding: "24px clamp(14px, 3vw, 20px) 40px",
           width: "100%",
-          boxSizing: "border-box",
           overflowX: "hidden",
         }}
       >
         {children}
       </div>
+
+      <nav
+        className="mobile-bottom-nav"
+        aria-label="Mobile navigation"
+        style={{
+          position: "fixed",
+          left: "12px",
+          right: "12px",
+          bottom: "10px",
+          zIndex: 55,
+          display: "none",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: "8px",
+          padding: "8px",
+          borderRadius: "24px",
+          background: "color-mix(in srgb, var(--app-surface) 88%, transparent)",
+          backdropFilter: "blur(18px)",
+          border: "1px solid color-mix(in srgb, var(--app-card-border) 76%, transparent)",
+          boxShadow: "0 18px 40px rgba(15,23,42,0.18)",
+        }}
+      >
+        {mobileNavItems.map((item) => {
+          const isActive = activeMobileRoute === item.to;
+
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              style={{
+                textDecoration: "none",
+                color: isActive ? "#ffffff" : "var(--app-text-soft)",
+              }}
+            >
+              <div
+                style={{
+                  minHeight: "58px",
+                  borderRadius: "18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
+                  background: isActive
+                    ? "linear-gradient(135deg, var(--app-primary) 0%, var(--app-primary-hover) 100%)"
+                    : "transparent",
+                  boxShadow: isActive ? "var(--app-shadow-glow)" : "none",
+                  fontWeight: 700,
+                }}
+              >
+                <span style={{ fontSize: item.to === "/add-trade" ? "20px" : "16px", lineHeight: 1 }}>
+                  {item.icon}
+                </span>
+                <span style={{ fontSize: "11px", lineHeight: 1.1 }}>{item.label}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
 
 export default AppShell;
+
+

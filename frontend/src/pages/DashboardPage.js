@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "../styles";
+import StatusBanner from "../components/StatusBanner";
 import TradeForm from "../components/TradeForm";
 import StatsCards from "../components/StatsCards";
 import TradeList from "../components/TradeList";
 import ImportTradesCard from "../components/ImportTradesCard";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -147,12 +149,13 @@ function DashboardPage() {
   const [newPresetName, setNewPresetName] = useState("");
   const [presets, setPresets] = useState([]);
   const [trades, setTrades] = useState([]);
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
   const [editingTradeId, setEditingTradeId] = useState(null);
   const [dateFilter, setDateFilter] = useState("");
   const [reviewingTradeId, setReviewingTradeId] = useState("");
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [loadingTrades, setLoadingTrades] = useState(true);
 
   const token = localStorage.getItem("token") || "";
   const selectedPreset = presets.find((p) => p._id === selectedPresetId) || null;
@@ -235,38 +238,74 @@ function DashboardPage() {
       if (res.ok) {
         setPresets(Array.isArray(data) ? data : []);
       } else {
-        setMessage(data.message || "Could not load presets");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Presets",
+          message: data.message || "Your presets could not be loaded right now.",
+        });
       }
     } catch (error) {
       console.error("fetch presets error:", error);
-      setMessage("Preset request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "Your presets could not be loaded right now.",
+          context: "Preset",
+        }),
+      });
     }
   };
 
   const fetchTrades = async () => {
     try {
+      setLoadingTrades(true);
       const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
         setTrades(Array.isArray(data) ? data : []);
-        setMessage("Trades loaded");
+        setStatus({
+          tone: "success",
+          title: "Dashboard Ready",
+          message: "Your trades and stats are loaded.",
+        });
       } else {
-        setMessage(data.message || "Could not load trades");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Trades",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not load your dashboard trades right now.",
+            context: "Trade",
+          }),
+        });
       }
     } catch (error) {
       console.error("fetch trades error:", error);
-      setMessage("Trades request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not load your dashboard trades right now.",
+          context: "Trade",
+        }),
+      });
+    } finally {
+      setLoadingTrades(false);
     }
   };
 
   const loadPreset = () => {
     const preset = presets.find((p) => p._id === selectedPresetId);
     if (!preset) {
-      setMessage("Choose a preset first");
+      setStatus({ tone: "warning", title: "Choose a Preset", message: "Select a preset first." });
       return;
     }
 
@@ -283,13 +322,13 @@ function DashboardPage() {
       setPointValue(autoPointValue !== null && autoPointValue !== undefined ? String(autoPointValue) : "");
     }
 
-    setMessage(`Loaded preset: ${preset.name}`);
+    setStatus({ tone: "success", title: "Preset Loaded", message: `${preset.name} is ready in the form.` });
   };
 
   const saveCurrentAsPreset = async () => {
     try {
       if (!newPresetName.trim()) {
-        setMessage("Enter a preset name");
+        setStatus({ tone: "warning", title: "Preset Name Required", message: "Enter a preset name before saving." });
         return;
       }
 
@@ -309,25 +348,25 @@ function DashboardPage() {
           notes,
         }),
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(`Preset saved: ${data.name}`);
+        setStatus({ tone: "success", title: "Preset Saved", message: data.name ? `${data.name} has been saved.` : "Your preset has been saved." });
         setNewPresetName("");
         fetchPresets();
       } else {
-        setMessage(data.message || "Could not save preset");
+        setStatus({ tone: "error", title: "Could Not Save Preset", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not save that preset right now.", context: "Preset" }) });
       }
     } catch (error) {
       console.error("save preset error:", error);
-      setMessage("Save preset crashed");
+      setStatus({ tone: "error", title: "Could Not Save Preset", message: getFriendlyErrorMessage({ error, fallback: "We could not save that preset right now.", context: "Preset" }) });
     }
   };
 
   const deletePreset = async () => {
     try {
       if (!selectedPresetId) {
-        setMessage("Choose a preset to delete");
+        setStatus({ tone: "warning", title: "Choose a Preset", message: "Select a preset first." });
         return;
       }
 
@@ -335,18 +374,18 @@ function DashboardPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Preset deleted");
+        setStatus({ tone: "success", title: "Preset Deleted", message: data.message || "The preset was removed." });
         setSelectedPresetId("");
         fetchPresets();
       } else {
-        setMessage(data.message || "Could not delete preset");
+        setStatus({ tone: "error", title: "Could Not Delete Preset", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not delete that preset right now.", context: "Preset" }) });
       }
     } catch (error) {
       console.error("delete preset error:", error);
-      setMessage("Delete preset crashed");
+      setStatus({ tone: "error", title: "Could Not Delete Preset", message: getFriendlyErrorMessage({ error, fallback: "We could not delete that preset right now.", context: "Preset" }) });
     }
   };
 
@@ -354,7 +393,7 @@ function DashboardPage() {
     try {
       const preset = presets.find((p) => p.name === presetName);
       if (!preset) {
-        setMessage("Preset not found");
+        setStatus({ tone: "warning", title: "Preset Not Found", message: "That strategy preset could not be found." });
         return;
       }
 
@@ -362,18 +401,18 @@ function DashboardPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Strategy deleted");
+        setStatus({ tone: "success", title: "Strategy Deleted", message: data.message || "The strategy was removed." });
         if (selectedPresetId === preset._id) setSelectedPresetId("");
         fetchPresets();
       } else {
-        setMessage(data.message || "Could not delete strategy");
+        setStatus({ tone: "error", title: "Could Not Delete Strategy", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not delete that strategy right now.", context: "Strategy" }) });
       }
     } catch (error) {
       console.error("delete strategy error:", error);
-      setMessage("Delete strategy crashed");
+      setStatus({ tone: "error", title: "Could Not Delete Strategy", message: getFriendlyErrorMessage({ error, fallback: "We could not delete that strategy right now.", context: "Strategy" }) });
     }
   };
 
@@ -390,19 +429,19 @@ function DashboardPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
         setImportResult(data);
-        setMessage(data.message || "CSV imported");
+        setStatus({ tone: "success", title: "CSV Imported", message: data.message || "Your CSV import completed." });
         fetchTrades();
       } else {
-        setMessage(data.message || "Could not import CSV");
+        setStatus({ tone: "error", title: "Could Not Import CSV", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not import that CSV right now.", context: "CSV" }) });
         setImportResult(data);
       }
     } catch (error) {
       console.error("csv import error:", error);
-      setMessage("CSV import crashed");
+      setStatus({ tone: "error", title: "Could Not Import CSV", message: getFriendlyErrorMessage({ error, fallback: "We could not import that CSV right now.", context: "CSV" }) });
     } finally {
       setIsImportingCsv(false);
     }
@@ -416,17 +455,17 @@ function DashboardPage() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage("AI trade review generated");
+        setStatus({ tone: "success", title: "AI Review Ready", message: data.message || "The AI review has been added to the trade." });
         fetchTrades();
       } else {
-        setMessage(data.message || "Could not review trade");
+        setStatus({ tone: "error", title: "Could Not Review Trade", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not generate that AI review right now.", context: "AI review" }) });
       }
     } catch (error) {
       console.error("review trade error:", error);
-      setMessage("AI trade review crashed");
+      setStatus({ tone: "error", title: "Could Not Review Trade", message: getFriendlyErrorMessage({ error, fallback: "We could not generate that AI review right now.", context: "AI review" }) });
     } finally {
       setReviewingTradeId("");
     }
@@ -450,12 +489,12 @@ function DashboardPage() {
     setCropX(0);
     setCropY(0);
     setKeepScreenshot(Boolean(trade.screenshot));
-    setMessage("Editing trade");
+    setStatus({ tone: "info", title: "Editing Trade", message: "Review the form and save when you're ready." });
   };
 
   const cancelEdit = () => {
     clearForm();
-    setMessage("Edit canceled");
+    setStatus({ tone: "info", title: "Edit Canceled", message: "The form has been reset." });
   };
 
   const deleteTrade = async (id) => {
@@ -464,17 +503,17 @@ function DashboardPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Trade deleted");
+        setStatus({ tone: "success", title: "Trade Deleted", message: data.message || "The trade was deleted." });
         fetchTrades();
       } else {
-        setMessage(data.message || "Delete failed");
+        setStatus({ tone: "error", title: "Delete Failed", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not delete that trade.", context: "Trade" }) });
       }
     } catch (error) {
       console.error("delete trade error:", error);
-      setMessage("Delete crashed");
+      setStatus({ tone: "error", title: "Delete Failed", message: getFriendlyErrorMessage({ error, fallback: "We could not delete that trade.", context: "Trade" }) });
     }
   };
 
@@ -521,18 +560,18 @@ function DashboardPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage("Trade added");
+        setStatus({ tone: "success", title: "Trade Saved", message: data.message || "Your trade has been added." });
         clearForm();
         fetchTrades();
       } else {
-        setMessage(data.message || "Add trade failed");
+        setStatus({ tone: "error", title: "Could Not Save Trade", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not save your trade right now.", context: "Trade" }) });
       }
     } catch (error) {
       console.error("add trade error:", error);
-      setMessage("Add trade crashed");
+      setStatus({ tone: "error", title: "Could Not Save Trade", message: getFriendlyErrorMessage({ error, fallback: "We could not save your trade right now.", context: "Trade" }) });
     }
   };
 
@@ -544,18 +583,18 @@ function DashboardPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage("Trade updated");
+        setStatus({ tone: "success", title: "Trade Updated", message: data.message || "Your trade changes have been saved." });
         clearForm();
         fetchTrades();
       } else {
-        setMessage(data.message || "Update failed");
+        setStatus({ tone: "error", title: "Could Not Update Trade", message: getFriendlyErrorMessage({ response: res, data, fallback: "We could not update your trade right now.", context: "Trade" }) });
       }
     } catch (error) {
       console.error("update trade error:", error);
-      setMessage("Update crashed");
+      setStatus({ tone: "error", title: "Could Not Update Trade", message: getFriendlyErrorMessage({ error, fallback: "We could not update your trade right now.", context: "Trade" }) });
     }
   };
 
@@ -605,13 +644,6 @@ function DashboardPage() {
     }));
   }, [filteredTrades]);
 
-  const messageTone =
-    message.toLowerCase().includes("error") ||
-    message.toLowerCase().includes("failed") ||
-    message.toLowerCase().includes("could not")
-      ? "var(--app-danger)"
-      : "var(--app-text)";
-
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -633,9 +665,19 @@ function DashboardPage() {
           </div>
         </div>
 
-        <div style={{ ...styles.card, marginBottom: "20px" }}>
-          <div style={{ ...styles.statusText, color: messageTone }}>{message || "Ready"}</div>
+        <div style={{ marginBottom: "20px" }}>
+          <StatusBanner
+            tone={status.message ? status.tone : "info"}
+            title={status.title || "Dashboard"}
+            message={status.message || "Manage trades, presets, CSV imports, and AI reviews from here."}
+          />
         </div>
+
+        {loadingTrades ? (
+          <div style={{ marginBottom: "20px" }}>
+            <StatusBanner tone="info" title="Loading" message="Refreshing your dashboard data." compact />
+          </div>
+        ) : null}
 
         <StatsCards stats={stats} />
 
@@ -686,7 +728,7 @@ function DashboardPage() {
             deletePreset={deletePreset}
           />
 
-          <div style={{ display: "grid", gap: "20px" }}>
+          <div className="dashboard-side-column" style={{ display: "grid", gap: "20px" }}>
             <div style={styles.card}>
               <h2 style={styles.cardTitle}>Filters</h2>
 
@@ -731,7 +773,7 @@ function DashboardPage() {
                     <div>
                       <div style={styles.tradeSymbol}>{stat.name}</div>
                       <div style={styles.tradeNote}>
-                        {stat.totalTrades} trades • {stat.winRate}% win rate
+                        {stat.totalTrades} trades | {stat.winRate}% win rate
                       </div>
                     </div>
 
@@ -776,3 +818,5 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
+

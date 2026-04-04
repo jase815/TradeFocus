@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import StatusBanner from "../components/StatusBanner";
 import TradeForm from "../components/TradeForm";
-import styles from "../styles";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -115,8 +116,10 @@ function AddTradePage() {
   const [selectedPresetId, setSelectedPresetId] = useState("");
   const [newPresetName, setNewPresetName] = useState("");
   const [presets, setPresets] = useState([]);
-  const [message, setMessage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
 
   useEffect(() => {
     fetchPresets();
@@ -127,6 +130,7 @@ function AddTradePage() {
       loadTradeForEdit(editTradeId);
     } else {
       setIsEditing(false);
+      setLoading(false);
     }
   }, [editTradeId]);
 
@@ -146,36 +150,72 @@ function AddTradePage() {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
         setPresets(Array.isArray(data) ? data : []);
       } else {
-        setMessage(data.message || "Could not load presets");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Presets",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "Your presets could not be loaded right now.",
+            context: "Preset",
+          }),
+        });
       }
     } catch (error) {
-      console.error("fetch presets error:", error);
-      setMessage("Preset request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "Your presets could not be loaded right now.",
+          context: "Preset",
+        }),
+      });
     }
   };
 
   const loadTradeForEdit = async (tradeId) => {
     try {
+      setLoading(true);
+      setStatus({
+        tone: "info",
+        title: "Loading Trade",
+        message: "Fetching the trade you want to edit.",
+      });
+
       const token = localStorage.getItem("token") || "";
       const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (!res.ok) {
-        setMessage(data.message || "Could not load trade");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Trade",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not open that trade for editing.",
+            context: "Trade",
+          }),
+        });
         return;
       }
 
       const trade = (Array.isArray(data) ? data : []).find((item) => item._id === tradeId);
       if (!trade) {
-        setMessage("Trade not found");
+        setStatus({
+          tone: "warning",
+          title: "Trade Not Found",
+          message: "That trade could not be found anymore.",
+        });
         return;
       }
 
@@ -196,10 +236,23 @@ function AddTradePage() {
       setCropZoom(1);
       setCropX(0);
       setCropY(0);
-      setMessage("Editing trade");
+      setStatus({
+        tone: "success",
+        title: "Editing Trade",
+        message: "Review the details below and save when you're ready.",
+      });
     } catch (error) {
-      console.error("load trade error:", error);
-      setMessage("Could not load trade for editing");
+      setStatus({
+        tone: "error",
+        title: "Could Not Load Trade",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not open that trade for editing.",
+          context: "Trade",
+        }),
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -222,12 +275,21 @@ function AddTradePage() {
     setSelectedPresetId("");
     setNewPresetName("");
     setIsEditing(false);
+    setStatus({
+      tone: "info",
+      title: "Form Cleared",
+      message: "You can start a fresh trade entry now.",
+    });
   };
 
   const loadPreset = () => {
     const preset = presets.find((p) => p._id === selectedPresetId);
     if (!preset) {
-      setMessage("Choose a preset first");
+      setStatus({
+        tone: "warning",
+        title: "Choose a Preset",
+        message: "Select a preset first, then load it into the form.",
+      });
       return;
     }
 
@@ -237,14 +299,22 @@ function AddTradePage() {
     setManualPnl(preset.manualPnl === null || preset.manualPnl === undefined ? "" : String(preset.manualPnl));
     setNotes(preset.notes || "");
     setPointValue(preset.pointValue === null || preset.pointValue === undefined ? "" : String(preset.pointValue));
-    setMessage(`Loaded preset: ${preset.name}`);
+    setStatus({
+      tone: "success",
+      title: "Preset Loaded",
+      message: `${preset.name} has been applied to the form.`,
+    });
   };
 
   const saveCurrentAsPreset = async () => {
     try {
       const token = localStorage.getItem("token") || "";
       if (!newPresetName.trim()) {
-        setMessage("Enter a preset name");
+        setStatus({
+          tone: "warning",
+          title: "Preset Name Required",
+          message: "Enter a preset name before saving.",
+        });
         return;
       }
 
@@ -264,18 +334,38 @@ function AddTradePage() {
           notes,
         }),
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(`Preset saved: ${data.name}`);
         setNewPresetName("");
         fetchPresets();
+        setStatus({
+          tone: "success",
+          title: "Preset Saved",
+          message: data.name ? `${data.name} is ready to use.` : "Your preset has been saved.",
+        });
       } else {
-        setMessage(data.message || "Could not save preset");
+        setStatus({
+          tone: "error",
+          title: "Could Not Save Preset",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not save that preset right now.",
+            context: "Preset",
+          }),
+        });
       }
     } catch (error) {
-      console.error("save preset error:", error);
-      setMessage("Save preset crashed");
+      setStatus({
+        tone: "error",
+        title: "Could Not Save Preset",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not save that preset right now.",
+          context: "Preset",
+        }),
+      });
     }
   };
 
@@ -283,7 +373,11 @@ function AddTradePage() {
     try {
       const token = localStorage.getItem("token") || "";
       if (!selectedPresetId) {
-        setMessage("Choose a preset to delete");
+        setStatus({
+          tone: "warning",
+          title: "Choose a Preset",
+          message: "Select a preset first, then delete it.",
+        });
         return;
       }
 
@@ -291,18 +385,38 @@ function AddTradePage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage(data.message || "Preset deleted");
         setSelectedPresetId("");
         fetchPresets();
+        setStatus({
+          tone: "success",
+          title: "Preset Deleted",
+          message: data.message || "The preset has been removed.",
+        });
       } else {
-        setMessage(data.message || "Could not delete preset");
+        setStatus({
+          tone: "error",
+          title: "Could Not Delete Preset",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not delete that preset right now.",
+            context: "Preset",
+          }),
+        });
       }
     } catch (error) {
-      console.error("delete preset error:", error);
-      setMessage("Delete preset crashed");
+      setStatus({
+        tone: "error",
+        title: "Could Not Delete Preset",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not delete that preset right now.",
+          context: "Preset",
+        }),
+      });
     }
   };
 
@@ -345,6 +459,13 @@ function AddTradePage() {
 
   const addTrade = async () => {
     try {
+      setSaving(true);
+      setStatus({
+        tone: "info",
+        title: "Saving Trade",
+        message: "Creating your new trade entry.",
+      });
+
       const token = localStorage.getItem("token") || "";
       const formData = await buildTradeFormData();
       const res = await fetch(`${API_URL}/api/trades`, {
@@ -352,23 +473,52 @@ function AddTradePage() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage("Trade added");
         clearForm();
+        setStatus({
+          tone: "success",
+          title: "Trade Saved",
+          message: data.message || "Your trade has been added to the journal.",
+        });
         navigate("/journal");
       } else {
-        setMessage(data.message || "Add trade failed");
+        setStatus({
+          tone: "error",
+          title: "Could Not Save Trade",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not save your trade right now.",
+            context: "Trade",
+          }),
+        });
       }
     } catch (error) {
-      console.error("add trade error:", error);
-      setMessage("Add trade crashed");
+      setStatus({
+        tone: "error",
+        title: "Could Not Save Trade",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not save your trade right now.",
+          context: "Trade",
+        }),
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
   const updateTrade = async () => {
     try {
+      setSaving(true);
+      setStatus({
+        tone: "info",
+        title: "Updating Trade",
+        message: "Saving your latest trade changes.",
+      });
+
       const token = localStorage.getItem("token") || "";
       const formData = await buildTradeFormData();
       const res = await fetch(`${API_URL}/api/trades/${editTradeId}`, {
@@ -376,17 +526,39 @@ function AddTradePage() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
-        setMessage("Trade updated");
+        setStatus({
+          tone: "success",
+          title: "Trade Updated",
+          message: data.message || "Your trade changes have been saved.",
+        });
         navigate("/journal");
       } else {
-        setMessage(data.message || "Update failed");
+        setStatus({
+          tone: "error",
+          title: "Could Not Update Trade",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not update your trade right now.",
+            context: "Trade",
+          }),
+        });
       }
     } catch (error) {
-      console.error("update trade error:", error);
-      setMessage("Update crashed");
+      setStatus({
+        tone: "error",
+        title: "Could Not Update Trade",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not update your trade right now.",
+          context: "Trade",
+        }),
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -394,69 +566,78 @@ function AddTradePage() {
     navigate("/journal");
   };
 
-  const messageTone =
-    message.toLowerCase().includes("failed") || message.toLowerCase().includes("could not")
-      ? "var(--app-danger)"
-      : "var(--app-text)";
-
   return (
     <AppShell
       title={isEditing ? "Edit Trade" : "Add Trade"}
       subtitle="Log a trade manually, attach screenshots, and crop them before saving."
     >
-      {message ? (
-        <div style={{ ...styles.card, marginBottom: "20px", color: messageTone }}>{message}</div>
-      ) : null}
-
-      <div style={{ maxWidth: "820px", width: "100%" }}>
-        <TradeForm
-          symbol={symbol}
-          setSymbol={setSymbol}
-          direction={direction}
-          setDirection={setDirection}
-          contracts={contracts}
-          setContracts={setContracts}
-          pointValue={pointValue}
-          setPointValue={setPointValue}
-          manualPnl={manualPnl}
-          setManualPnl={setManualPnl}
-          tradeDate={tradeDate}
-          setTradeDate={setTradeDate}
-          entry={entry}
-          setEntry={setEntry}
-          exit={exit}
-          setExit={setExit}
-          notes={notes}
-          setNotes={setNotes}
-          screenshotFile={screenshotFile}
-          setScreenshotFile={setScreenshotFile}
-          screenshotPreview={screenshotPreview}
-          setScreenshotPreview={setScreenshotPreview}
-          cropZoom={cropZoom}
-          setCropZoom={setCropZoom}
-          cropX={cropX}
-          setCropX={setCropX}
-          cropY={cropY}
-          setCropY={setCropY}
-          keepScreenshot={keepScreenshot}
-          setKeepScreenshot={setKeepScreenshot}
-          addTrade={addTrade}
-          isEditing={isEditing}
-          updateTrade={updateTrade}
-          cancelEdit={cancelEdit}
-          clearForm={clearForm}
-          presets={presets}
-          selectedPresetId={selectedPresetId}
-          setSelectedPresetId={setSelectedPresetId}
-          newPresetName={newPresetName}
-          setNewPresetName={setNewPresetName}
-          loadPreset={loadPreset}
-          saveCurrentAsPreset={saveCurrentAsPreset}
-          deletePreset={deletePreset}
+      <div style={{ marginBottom: "18px" }}>
+        <StatusBanner
+          tone={status.message ? status.tone : "info"}
+          title={status.title || (isEditing ? "Edit Trade" : "Add Trade")}
+          message={
+            status.message ||
+            "Capture the setup, review the details, and save when the trade record looks right."
+          }
         />
       </div>
+
+      {loading ? (
+        <div style={{ width: "100%", maxWidth: "820px" }}>
+          <StatusBanner tone="info" title="Loading" message="Preparing your trade form." />
+        </div>
+      ) : (
+        <div style={{ maxWidth: "820px", width: "100%" }}>
+          <TradeForm
+            symbol={symbol}
+            setSymbol={setSymbol}
+            direction={direction}
+            setDirection={setDirection}
+            contracts={contracts}
+            setContracts={setContracts}
+            pointValue={pointValue}
+            setPointValue={setPointValue}
+            manualPnl={manualPnl}
+            setManualPnl={setManualPnl}
+            tradeDate={tradeDate}
+            setTradeDate={setTradeDate}
+            entry={entry}
+            setEntry={setEntry}
+            exit={exit}
+            setExit={setExit}
+            notes={notes}
+            setNotes={setNotes}
+            screenshotFile={screenshotFile}
+            setScreenshotFile={setScreenshotFile}
+            screenshotPreview={screenshotPreview}
+            setScreenshotPreview={setScreenshotPreview}
+            cropZoom={cropZoom}
+            setCropZoom={setCropZoom}
+            cropX={cropX}
+            setCropX={setCropX}
+            cropY={cropY}
+            setCropY={setCropY}
+            keepScreenshot={keepScreenshot}
+            setKeepScreenshot={setKeepScreenshot}
+            addTrade={saving ? () => {} : addTrade}
+            isEditing={isEditing}
+            updateTrade={saving ? () => {} : updateTrade}
+            cancelEdit={cancelEdit}
+            clearForm={clearForm}
+            presets={presets}
+            selectedPresetId={selectedPresetId}
+            setSelectedPresetId={setSelectedPresetId}
+            newPresetName={newPresetName}
+            setNewPresetName={setNewPresetName}
+            loadPreset={loadPreset}
+            saveCurrentAsPreset={saveCurrentAsPreset}
+            deletePreset={deletePreset}
+          />
+        </div>
+      )}
     </AppShell>
   );
 }
 
 export default AddTradePage;
+

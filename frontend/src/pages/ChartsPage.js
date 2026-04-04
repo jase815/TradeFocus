@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AppShell from "../components/AppShell";
+import StatusBanner from "../components/StatusBanner";
 import { API_URL } from "../config";
+import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -124,6 +126,7 @@ function DonutCard({ title, centerLabel, centerValue, segments, footer }) {
 
   return (
     <div
+      className="charts-donut-card"
       style={{
         background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
         borderRadius: "24px",
@@ -136,8 +139,9 @@ function DonutCard({ title, centerLabel, centerValue, segments, footer }) {
         {title}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+      <div className="charts-donut-layout" style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
         <div
+          className="charts-donut-visual"
           style={{
             width: "min(180px, 46vw)",
             height: "min(180px, 46vw)",
@@ -165,6 +169,7 @@ function DonutCard({ title, centerLabel, centerValue, segments, footer }) {
           />
 
           <div
+            className="charts-donut-center"
             style={{
               width: "60%",
               height: "60%",
@@ -190,7 +195,7 @@ function DonutCard({ title, centerLabel, centerValue, segments, footer }) {
           </div>
         </div>
 
-        <div style={{ flex: 1, minWidth: "220px" }}>
+        <div className="charts-donut-legend" style={{ flex: 1, minWidth: "220px" }}>
           {segments.map((item) => (
             <div
               key={item.label}
@@ -240,7 +245,7 @@ function DonutCard({ title, centerLabel, centerValue, segments, footer }) {
   );
 }
 
-function StatCard({ label, value, valueColor = "var(--app-text)", subtext = "", icon = "•", accent = "var(--app-primary)", accentBg = "var(--app-primary-soft)" }) {
+function StatCard({ label, value, valueColor = "var(--app-text)", subtext = "", icon = "ST", accent = "var(--app-primary)", accentBg = "var(--app-primary-soft)" }) {
   return (
     <div
       style={{
@@ -287,7 +292,8 @@ function StatCard({ label, value, valueColor = "var(--app-text)", subtext = "", 
 
 function ChartsPage() {
   const [trades, setTrades] = useState([]);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
 
   useEffect(() => {
     fetchTrades();
@@ -295,21 +301,51 @@ function ChartsPage() {
 
   const fetchTrades = async () => {
     try {
+      setLoading(true);
+      setStatus({
+        tone: "info",
+        title: "Loading Charts",
+        message: "Pulling in your latest performance data.",
+      });
       const token = localStorage.getItem("token") || "";
       const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (res.ok) {
         setTrades(Array.isArray(data) ? data : []);
+        setStatus({
+          tone: "success",
+          title: "Charts Ready",
+          message: "Your latest stats and performance breakdowns are loaded.",
+        });
       } else {
-        setMessage(data.message || "Could not load trades");
+        setStatus({
+          tone: "error",
+          title: "Could Not Load Charts",
+          message: getFriendlyErrorMessage({
+            response: res,
+            data,
+            fallback: "We could not load your chart data right now.",
+            context: "Charts",
+          }),
+        });
       }
     } catch (error) {
       console.error("fetch trades error:", error);
-      setMessage("Trades request crashed");
+      setStatus({
+        tone: "error",
+        title: "Connection Problem",
+        message: getFriendlyErrorMessage({
+          error,
+          fallback: "We could not load your chart data right now.",
+          context: "Charts",
+        }),
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -359,26 +395,40 @@ function ChartsPage() {
 
   return (
     <AppShell title="Charts" subtitle="Your performance hub with quick visual breakdowns.">
-      {message ? (
-        <div style={{ background: "var(--app-card)", borderRadius: "18px", padding: "14px 18px", boxShadow: "var(--app-shadow-soft)", marginBottom: "20px", color: "var(--app-danger)" }}>
-          {message}
-        </div>
+      <div style={{ marginBottom: "20px" }}>
+        <StatusBanner
+          tone={status.message ? status.tone : "info"}
+          title={status.title || "Charts"}
+          message={
+            status.message ||
+            "See your PnL, trade mix, and recent activity in one place."
+          }
+        />
+      </div>
+
+      {loading ? (
+        <StatusBanner
+          tone="info"
+          title="Loading"
+          message="Building your chart view."
+          compact
+        />
       ) : null}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "16px", marginBottom: "20px" }}>
-        <StatCard label="Total Trades" value={stats.totalTrades} icon="◻" accent="var(--app-primary)" accentBg="var(--app-primary-soft)" />
-        <StatCard label="Win Rate" value={`${stats.winRate}%`} icon="✓" accent="var(--app-success)" accentBg="var(--app-success-bg)" />
+      <div className="charts-summary-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "16px", marginBottom: "20px" }}>
+        <StatCard label="Total Trades" value={stats.totalTrades} icon="TR" accent="var(--app-primary)" accentBg="var(--app-primary-soft)" />
+        <StatCard label="Win Rate" value={`${stats.winRate}%`} icon="WR" accent="var(--app-success)" accentBg="var(--app-success-bg)" />
         <StatCard
           label="Net PnL"
           value={formatMoney(stats.totalPnL)}
           valueColor={stats.totalPnL >= 0 ? "var(--app-success)" : "var(--app-danger)"}
-          icon={stats.totalPnL >= 0 ? "↗" : "↘"}
+          icon={stats.totalPnL >= 0 ? "UP" : "DN"}
           accent={stats.totalPnL >= 0 ? "var(--app-success)" : "var(--app-danger)"}
           accentBg={stats.totalPnL >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)"}
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "20px", marginBottom: "20px" }}>
+      <div className="charts-donut-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "20px", marginBottom: "20px" }}>
         <DonutCard
           title="PnL Breakdown"
           centerLabel="Net PnL"
@@ -403,17 +453,17 @@ function ChartsPage() {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "16px", marginBottom: "24px" }}>
+      <div className="charts-day-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "16px", marginBottom: "24px" }}>
         <StatCard
           label="Most Profitable Day"
           value={stats.mostProfitableDay ? formatMoney(stats.mostProfitableDay.pnl) : "--"}
           valueColor="var(--app-success)"
           subtext={
             stats.mostProfitableDay
-              ? `${formatTradeDateLabel(stats.mostProfitableDay.date)} • ${stats.mostProfitableDay.tradeCount} trade(s)`
+              ? `${formatTradeDateLabel(stats.mostProfitableDay.date)} | ${stats.mostProfitableDay.tradeCount} trade(s)`
               : "No daily data yet"
           }
-          icon="▲"
+          icon="HI"
           accent="var(--app-success)"
           accentBg="var(--app-success-bg)"
         />
@@ -424,16 +474,17 @@ function ChartsPage() {
           valueColor="var(--app-danger)"
           subtext={
             stats.leastProfitableDay
-              ? `${formatTradeDateLabel(stats.leastProfitableDay.date)} • ${stats.leastProfitableDay.tradeCount} trade(s)`
+              ? `${formatTradeDateLabel(stats.leastProfitableDay.date)} | ${stats.leastProfitableDay.tradeCount} trade(s)`
               : "No daily data yet"
           }
-          icon="▼"
+          icon="LO"
           accent="var(--app-danger)"
           accentBg="var(--app-danger-bg)"
         />
       </div>
 
       <div
+        className="charts-panel"
         style={{
           background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
           borderRadius: "24px",
@@ -457,6 +508,7 @@ function ChartsPage() {
 
               return (
                 <div
+                  className="charts-trade-row"
                   key={trade._id}
                   style={{
                     border: "1px solid var(--app-card-border)",
@@ -471,10 +523,10 @@ function ChartsPage() {
                 >
                   <div>
                     <div style={{ fontWeight: "bold", fontSize: "17px", color: "var(--app-text)", marginBottom: "4px" }}>
-                      {trade.symbol || "Trade"} • {(trade.direction || "").toUpperCase()}
+                      {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
                     </div>
                     <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
-                      {trade.tradeDate || "No date"} • Entry: {trade.entry ?? "--"} • Exit: {trade.exit ?? "--"}
+                      {trade.tradeDate || "No date"} | Entry: {trade.entry ?? "--"} | Exit: {trade.exit ?? "--"}
                     </div>
                   </div>
 
@@ -502,3 +554,5 @@ function ChartsPage() {
 }
 
 export default ChartsPage;
+
+

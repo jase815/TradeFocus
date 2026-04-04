@@ -4,11 +4,17 @@ const styles = {
     background: "linear-gradient(180deg, var(--app-bg-gradient-top) 0%, var(--app-bg-gradient-bottom) 100%)",
     padding: "clamp(18px, 3vw, 32px) clamp(14px, 3vw, 20px)",
     fontFamily: "Arial, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    overflowX: "hidden",
   },
 
   container: {
     maxWidth: "1100px",
     margin: "0 auto",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
   },
 
   header: {
@@ -71,6 +77,8 @@ const styles = {
     padding: "clamp(16px, 3vw, 20px)",
     boxShadow: "var(--app-shadow-card)",
     border: "1px solid var(--app-card-border)",
+    width: "100%",
+    minWidth: 0,
   },
 
   statLabel: {
@@ -98,6 +106,10 @@ const styles = {
     padding: "clamp(18px, 3vw, 24px)",
     boxShadow: "var(--app-shadow-card)",
     border: "1px solid var(--app-card-border)",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+    overflowWrap: "anywhere",
   },
 
   cardTitle: {
@@ -200,6 +212,8 @@ const styles = {
     borderRadius: "18px",
     padding: "16px",
     background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+    width: "100%",
+    minWidth: 0,
   },
 
   tradeTopRow: {
@@ -208,6 +222,7 @@ const styles = {
     alignItems: "flex-start",
     gap: "12px",
     marginBottom: "10px",
+    flexWrap: "wrap",
   },
 
   tradeSymbol: {
@@ -215,6 +230,7 @@ const styles = {
     fontWeight: "bold",
     color: "var(--app-text)",
     marginBottom: "4px",
+    overflowWrap: "anywhere",
   },
 
   tradeNote: {
@@ -242,6 +258,8 @@ const styles = {
   tradeActions: {
     display: "flex",
     justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: "10px",
   },
 
   deleteButton: {
