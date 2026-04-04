@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "../styles";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 function formatMoney(value) {
   const number = Number(value || 0);
@@ -78,7 +77,7 @@ function TradeList({
                   }}
                 >
                   <img
-                    src={`${API_BASE}${trade.screenshot}`}
+                    src={`${API_URL}${trade.screenshot}`}
                     alt="Trade screenshot"
                     style={{ width: "100%", maxHeight: "260px", objectFit: "cover", display: "block" }}
                   />

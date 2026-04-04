@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import TradeForm from "../components/TradeForm";
 import styles from "../styles";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -143,7 +142,7 @@ function AddTradePage() {
   const fetchPresets = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_BASE}/api/presets`, {
+      const res = await fetch(`${API_URL}/api/presets`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -163,7 +162,7 @@ function AddTradePage() {
   const loadTradeForEdit = async (tradeId) => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -192,7 +191,7 @@ function AddTradePage() {
       setNotes(trade.notes || "");
       setSelectedPresetId(trade.presetId || "");
       setScreenshotFile(null);
-      setScreenshotPreview(trade.screenshot ? `${API_BASE}${trade.screenshot}` : "");
+      setScreenshotPreview(trade.screenshot ? `${API_URL}${trade.screenshot}` : "");
       setKeepScreenshot(Boolean(trade.screenshot));
       setCropZoom(1);
       setCropX(0);
@@ -249,7 +248,7 @@ function AddTradePage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/api/presets`, {
+      const res = await fetch(`${API_URL}/api/presets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -288,7 +287,7 @@ function AddTradePage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/api/presets/${selectedPresetId}`, {
+      const res = await fetch(`${API_URL}/api/presets/${selectedPresetId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -348,7 +347,7 @@ function AddTradePage() {
     try {
       const token = localStorage.getItem("token") || "";
       const formData = await buildTradeFormData();
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -372,7 +371,7 @@ function AddTradePage() {
     try {
       const token = localStorage.getItem("token") || "";
       const formData = await buildTradeFormData();
-      const res = await fetch(`${API_BASE}/api/trades/${editTradeId}`, {
+      const res = await fetch(`${API_URL}/api/trades/${editTradeId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -171,7 +170,7 @@ function CalendarPage() {
   const fetchTrades = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -258,7 +257,7 @@ function CalendarPage() {
     try {
       const token = localStorage.getItem("token");
       setDeletingId(id);
-      const res = await fetch(`${API_BASE}/api/trades/${id}`, {
+      const res = await fetch(`${API_URL}/api/trades/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

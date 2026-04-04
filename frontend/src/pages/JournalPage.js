@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -90,7 +89,7 @@ function JournalPage() {
   const fetchTrades = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -117,7 +116,7 @@ function JournalPage() {
       const token = localStorage.getItem("token") || "";
       setDeletingTradeId(tradeId);
 
-      const res = await fetch(`${API_BASE}/api/trades/${tradeId}`, {
+      const res = await fetch(`${API_URL}/api/trades/${tradeId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -246,7 +245,7 @@ function JournalPage() {
                 {trade.screenshot ? (
                   <div style={{ marginBottom: "14px", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--app-card-border)" }}>
                     <img
-                      src={`${API_BASE}${trade.screenshot}`}
+                      src={`${API_URL}${trade.screenshot}`}
                       alt="Trade screenshot"
                       style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block" }}
                     />

@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles";
 import AuthCard from "../components/AuthCard";
-
-const API_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+import { API_URL } from "../config";
 
 function AuthPage() {
   const [email, setEmail] = useState("");

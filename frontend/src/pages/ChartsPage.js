@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AppShell from "../components/AppShell";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -297,7 +296,7 @@ function ChartsPage() {
   const fetchTrades = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });

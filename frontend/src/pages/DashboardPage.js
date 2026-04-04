@@ -5,8 +5,7 @@ import TradeForm from "../components/TradeForm";
 import StatsCards from "../components/StatsCards";
 import TradeList from "../components/TradeList";
 import ImportTradesCard from "../components/ImportTradesCard";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const instrumentConfig = {
   NQ: { pointValue: 20 },
@@ -227,7 +226,7 @@ function DashboardPage() {
 
   const fetchPresets = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/presets`, {
+      const res = await fetch(`${API_URL}/api/presets`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -246,7 +245,7 @@ function DashboardPage() {
 
   const fetchTrades = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -294,7 +293,7 @@ function DashboardPage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/api/presets`, {
+      const res = await fetch(`${API_URL}/api/presets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -332,7 +331,7 @@ function DashboardPage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/api/presets/${selectedPresetId}`, {
+      const res = await fetch(`${API_URL}/api/presets/${selectedPresetId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -359,7 +358,7 @@ function DashboardPage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/api/presets/${preset._id}`, {
+      const res = await fetch(`${API_URL}/api/presets/${preset._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -386,7 +385,7 @@ function DashboardPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`${API_BASE}/api/import/csv`, {
+      const res = await fetch(`${API_URL}/api/import/csv`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -413,7 +412,7 @@ function DashboardPage() {
     try {
       setReviewingTradeId(tradeId);
 
-      const res = await fetch(`${API_BASE}/api/ai/review-trade/${tradeId}`, {
+      const res = await fetch(`${API_URL}/api/ai/review-trade/${tradeId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -446,7 +445,7 @@ function DashboardPage() {
     setNotes(trade.notes || "");
     setSelectedPresetId(trade.presetId || "");
     setScreenshotFile(null);
-    setScreenshotPreview(trade.screenshot ? `${API_BASE}${trade.screenshot}` : "");
+    setScreenshotPreview(trade.screenshot ? `${API_URL}${trade.screenshot}` : "");
     setCropZoom(1);
     setCropX(0);
     setCropY(0);
@@ -461,7 +460,7 @@ function DashboardPage() {
 
   const deleteTrade = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/api/trades/${id}`, {
+      const res = await fetch(`${API_URL}/api/trades/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -517,7 +516,7 @@ function DashboardPage() {
   const addTrade = async () => {
     try {
       const formData = await buildTradeFormData();
-      const res = await fetch(`${API_BASE}/api/trades`, {
+      const res = await fetch(`${API_URL}/api/trades`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -540,7 +539,7 @@ function DashboardPage() {
   const updateTrade = async () => {
     try {
       const formData = await buildTradeFormData();
-      const res = await fetch(`${API_BASE}/api/trades/${editingTradeId}`, {
+      const res = await fetch(`${API_URL}/api/trades/${editingTradeId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

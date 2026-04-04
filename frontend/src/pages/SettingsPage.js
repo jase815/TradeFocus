@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import AppShell from "../components/AppShell";
 import styles from "../styles";
 import { useThemeMode } from "../context/ThemeContext";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const defaultSettings = {
   displayName: "",
@@ -110,7 +109,7 @@ function SettingsPage() {
       setLoading(true);
       const token = localStorage.getItem("token") || "";
 
-      const res = await fetch(`${API_BASE}/api/settings`, {
+      const res = await fetch(`${API_URL}/api/settings`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -198,7 +197,7 @@ function SettingsPage() {
         weeklyLossLimit: settings.weeklyLossLimit === "" ? 0 : Number(settings.weeklyLossLimit),
       };
 
-      const res = await fetch(`${API_BASE}/api/settings`, {
+      const res = await fetch(`${API_URL}/api/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
