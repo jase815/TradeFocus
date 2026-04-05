@@ -238,12 +238,15 @@ function CalendarPage() {
     return { totalMonthPnl, totalTrades, winDays, lossDays };
   }, [currentMonth, dailyMap]);
 
-  const selectedTrades = selectedDate ? dailyMap[selectedDate]?.trades || [] : [];
-  const displayedSelectedTrades = useMemo(
-    () => selectedTrades.slice(0, visibleSelectedTrades),
-    [selectedTrades, visibleSelectedTrades]
-  );
+const selectedTrades = useMemo(() => {
+  if (!selectedDate) return [];
+  return dailyMap[selectedDate]?.trades || [];
+}, [selectedDate, dailyMap]);
 
+const displayedSelectedTrades = useMemo(
+  () => selectedTrades.slice(0, visibleSelectedTrades),
+  [selectedTrades, visibleSelectedTrades]
+);
   const selectedDateLabel = useMemo(() => {
     if (!selectedDate) return "";
     const parsed = new Date(`${selectedDate}T00:00:00`);
