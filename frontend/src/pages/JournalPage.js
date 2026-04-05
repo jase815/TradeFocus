@@ -23,6 +23,9 @@ const instrumentConfig = {
   SOL: { pointValue: 1 },
 };
 
+const INITIAL_VISIBLE_TRADES = 8;
+const LOAD_MORE_STEP = 8;
+
 function normalizeSymbol(symbol) {
   if (!symbol) return "";
   const clean = String(symbol).trim().toUpperCase();
@@ -84,6 +87,7 @@ function JournalPage() {
   const [loading, setLoading] = useState(true);
   const [deletingTradeId, setDeletingTradeId] = useState("");
   const [filter, setFilter] = useState("all");
+  const [visibleTrades, setVisibleTrades] = useState(INITIAL_VISIBLE_TRADES);
 
   useEffect(() => {
     fetchTrades();
@@ -200,6 +204,15 @@ function JournalPage() {
     return filtered;
   }, [trades, filter]);
 
+  useEffect(() => {
+    setVisibleTrades(INITIAL_VISIBLE_TRADES);
+  }, [filter, trades.length]);
+
+  const displayedTrades = useMemo(
+    () => journalTrades.slice(0, visibleTrades),
+    [journalTrades, visibleTrades]
+  );
+
   const filterButtonStyle = (value) => ({
     border: "none",
     borderRadius: "999px",
@@ -268,92 +281,112 @@ function JournalPage() {
           No trades found for this filter yet.
         </div>
       ) : (
-        <div style={{ display: "grid", gap: "16px" }}>
-          {journalTrades.map((trade) => {
-            const pnl = calculateTradePnl(trade);
+        <>
+          <div style={{ display: "grid", gap: "16px" }}>
+            {displayedTrades.map((trade) => {
+              const pnl = calculateTradePnl(trade);
 
-            return (
-              <div key={trade._id} style={{ background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)", borderRadius: "22px", padding: "20px", boxShadow: "var(--app-shadow-card)", border: "1px solid var(--app-card-border)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
-                  <div>
-                    <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--app-text)", marginBottom: "4px" }}>
-                      {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
+              return (
+                <div key={trade._id} style={{ background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)", borderRadius: "22px", padding: "20px", boxShadow: "var(--app-shadow-card)", border: "1px solid var(--app-card-border)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                    <div>
+                      <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--app-text)", marginBottom: "4px" }}>
+                        {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
+                      </div>
+                      <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
+                        {trade.tradeDate || "No date"} {trade.presetName ? `| ${trade.presetName}` : ""}
+                      </div>
                     </div>
-                    <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
-                      {trade.tradeDate || "No date"} {trade.presetName ? `| ${trade.presetName}` : ""}
+
+                    <div
+                      style={{
+                        alignSelf: "flex-start",
+                        borderRadius: "999px",
+                        padding: "8px 12px",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        background: pnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)",
+                        color: pnl >= 0 ? "var(--app-success)" : "var(--app-danger)",
+                      }}
+                    >
+                      {formatMoney(pnl)}
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      alignSelf: "flex-start",
-                      borderRadius: "999px",
-                      padding: "8px 12px",
-                      fontWeight: "bold",
-                      fontSize: "14px",
-                      background: pnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)",
-                      color: pnl >= 0 ? "var(--app-success)" : "var(--app-danger)",
-                    }}
-                  >
-                    {formatMoney(pnl)}
+                  <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", color: "var(--app-text)", fontSize: "14px", marginBottom: "14px" }}>
+                    <span>Entry: {trade.entry ?? "--"}</span>
+                    <span>Exit: {trade.exit ?? "--"}</span>
+                    <span>Contracts: {trade.contracts ?? "--"}</span>
+                    <span>Point Value: {trade.pointValue ?? "--"}</span>
+                  </div>
+
+                  {trade.screenshot ? (
+                    <div style={{ marginBottom: "14px", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--app-card-border)" }}>
+                      <img
+                        src={`${API_URL}${trade.screenshot}`}
+                        alt="Trade screenshot"
+                        style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block" }}
+                      />
+                    </div>
+                  ) : null}
+
+                  {trade.notes ? (
+                    <div style={{ color: "var(--app-text)", fontSize: "14px", whiteSpace: "pre-wrap", marginBottom: "14px" }}>
+                      {trade.notes}
+                    </div>
+                  ) : null}
+
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => navigate(`/add-trade?edit=${trade._id}`)} style={{ border: "none", borderRadius: "12px", padding: "10px 14px", background: "var(--app-nav)", color: "#ffffff", fontWeight: "bold", cursor: "pointer" }}>
+                      Edit Trade
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteTrade(trade._id)}
+                      disabled={deletingTradeId === trade._id}
+                      style={{
+                        border: "none",
+                        borderRadius: "12px",
+                        padding: "10px 14px",
+                        background: "var(--app-danger)",
+                        color: "#ffffff",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        opacity: deletingTradeId === trade._id ? 0.7 : 1,
+                      }}
+                    >
+                      {deletingTradeId === trade._id ? "Deleting..." : "Delete"}
+                    </button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div style={{ display: "flex", gap: "18px", flexWrap: "wrap", color: "var(--app-text)", fontSize: "14px", marginBottom: "14px" }}>
-                  <span>Entry: {trade.entry ?? "--"}</span>
-                  <span>Exit: {trade.exit ?? "--"}</span>
-                  <span>Contracts: {trade.contracts ?? "--"}</span>
-                  <span>Point Value: {trade.pointValue ?? "--"}</span>
-                </div>
-
-                {trade.screenshot ? (
-                  <div style={{ marginBottom: "14px", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--app-card-border)" }}>
-                    <img
-                      src={`${API_URL}${trade.screenshot}`}
-                      alt="Trade screenshot"
-                      style={{ width: "100%", maxHeight: "320px", objectFit: "cover", display: "block" }}
-                    />
-                  </div>
-                ) : null}
-
-                {trade.notes ? (
-                  <div style={{ color: "var(--app-text)", fontSize: "14px", whiteSpace: "pre-wrap", marginBottom: "14px" }}>
-                    {trade.notes}
-                  </div>
-                ) : null}
-
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <button type="button" onClick={() => navigate(`/add-trade?edit=${trade._id}`)} style={{ border: "none", borderRadius: "12px", padding: "10px 14px", background: "var(--app-nav)", color: "#ffffff", fontWeight: "bold", cursor: "pointer" }}>
-                    Edit Trade
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => deleteTrade(trade._id)}
-                    disabled={deletingTradeId === trade._id}
-                    style={{
-                      border: "none",
-                      borderRadius: "12px",
-                      padding: "10px 14px",
-                      background: "var(--app-danger)",
-                      color: "#ffffff",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      opacity: deletingTradeId === trade._id ? 0.7 : 1,
-                    }}
-                  >
-                    {deletingTradeId === trade._id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {journalTrades.length > displayedTrades.length ? (
+            <div style={{ marginTop: "18px", display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setVisibleTrades((prev) => prev + LOAD_MORE_STEP)}
+                style={{
+                  border: "1px solid var(--app-primary-border)",
+                  borderRadius: "12px",
+                  padding: "10px 16px",
+                  background: "var(--app-primary-soft)",
+                  color: "var(--app-chip-text)",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                Load More
+              </button>
+            </div>
+          ) : null}
+        </>
       )}
     </AppShell>
   );
 }
 
 export default JournalPage;
-
-

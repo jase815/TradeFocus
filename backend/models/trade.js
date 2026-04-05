@@ -18,7 +18,15 @@ const tradeSchema = new mongoose.Schema({
   stopLoss: Number,
   takeProfit: Number,
   profit: Number,
+  fees: Number,
   screenshot: String,
+  imported: { type: Boolean, default: false },
+  importSource: { type: String, default: "" },
+  importBatchId: { type: String, default: "" },
+  externalTradeId: { type: String, default: "" },
+  importFingerprint: { type: String, default: "" },
+  entryTime: { type: String, default: "" },
+  exitTime: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

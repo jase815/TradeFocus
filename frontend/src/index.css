@@ -143,10 +143,6 @@ canvas {
     flex: 1 1 140px;
   }
 
-  .trade-form-header {
-    margin-bottom: 12px !important;
-  }
-
   .trade-form-summary {
     padding: 12px !important;
   }
@@ -192,18 +188,33 @@ canvas {
     width: 100% !important;
   }
 
-  .calendar-weekdays,
-  .calendar-days {
-    display: none !important;
-  }
-
   .calendar-grid-scroll {
-    overflow: visible !important;
+    overflow: hidden !important;
     padding-bottom: 0 !important;
   }
 
   .calendar-grid-inner {
     min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .calendar-weekdays,
+  .calendar-days {
+    display: grid !important;
+    gap: 4px !important;
+  }
+
+  .calendar-weekdays {
+    margin-bottom: 6px !important;
+  }
+
+  .calendar-day-cell,
+  .calendar-day-empty {
+    min-height: 72px !important;
+  }
+
+  .calendar-day-body {
+    padding: 6px !important;
   }
 
   .calendar-month-controls {

@@ -5,6 +5,7 @@ import JournalPage from "./pages/JournalPage";
 import AddTradePage from "./pages/AddTradePage";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
+import ImportTradesPage from "./pages/ImportTradesPage";
 import AuthPage from "./pages/AuthPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -103,6 +104,15 @@ function App() {
             element={
               <PrivateRoute>
                 <SettingsPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/import-trades"
+            element={
+              <PrivateRoute>
+                <ImportTradesPage />
               </PrivateRoute>
             }
           />

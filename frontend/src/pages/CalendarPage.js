@@ -114,54 +114,8 @@ function buildCalendarCells(monthDate) {
   return cells;
 }
 
-function buildMonthDates(monthDate) {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  return Array.from({ length: daysInMonth }, (_, index) => new Date(year, month, index + 1));
-}
-
-function SummaryCard({ label, value, valueColor, icon, accent, accentBg }) {
-  return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
-        borderRadius: "22px",
-        padding: "20px",
-        boxShadow: "var(--app-shadow-card)",
-        border: "1px solid var(--app-card-border)",
-      }}
-    >
-      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "6px", background: accent }} />
-
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ color: "var(--app-text-soft)", fontSize: "14px", marginBottom: "8px" }}>{label}</div>
-          <div style={{ fontSize: "28px", fontWeight: "bold", color: valueColor }}>{value}</div>
-        </div>
-
-        <div
-          style={{
-            minWidth: "42px",
-            height: "42px",
-            borderRadius: "14px",
-            background: accentBg,
-            color: accent,
-            display: "grid",
-            placeItems: "center",
-            fontSize: "18px",
-            fontWeight: "bold",
-          }}
-        >
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
+const INITIAL_SELECTED_TRADES = 6;
+const SELECTED_TRADES_STEP = 6;
 
 function CalendarPage() {
   const navigate = useNavigate();
@@ -175,10 +129,15 @@ function CalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState("");
+  const [visibleSelectedTrades, setVisibleSelectedTrades] = useState(INITIAL_SELECTED_TRADES);
 
   useEffect(() => {
     fetchTrades();
   }, []);
+
+  useEffect(() => {
+    setVisibleSelectedTrades(INITIAL_SELECTED_TRADES);
+  }, [selectedDate]);
 
   const fetchTrades = async () => {
     try {
@@ -254,7 +213,6 @@ function CalendarPage() {
   }, [trades]);
 
   const calendarCells = useMemo(() => buildCalendarCells(currentMonth), [currentMonth]);
-  const monthDates = useMemo(() => buildMonthDates(currentMonth), [currentMonth]);
 
   const monthSummary = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -281,6 +239,10 @@ function CalendarPage() {
   }, [currentMonth, dailyMap]);
 
   const selectedTrades = selectedDate ? dailyMap[selectedDate]?.trades || [] : [];
+  const displayedSelectedTrades = useMemo(
+    () => selectedTrades.slice(0, visibleSelectedTrades),
+    [selectedTrades, visibleSelectedTrades]
+  );
 
   const selectedDateLabel = useMemo(() => {
     if (!selectedDate) return "";
@@ -368,21 +330,48 @@ function CalendarPage() {
         />
       </div>
 
-      <div className="calendar-summary-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: "16px", marginBottom: "18px" }}>
-        <SummaryCard label="Month PnL" value={formatMoneyPretty(monthSummary.totalMonthPnl)} valueColor={monthSummary.totalMonthPnl >= 0 ? "var(--app-success)" : "var(--app-danger)"} icon={monthSummary.totalMonthPnl >= 0 ? "UP" : "DN"} accent={monthSummary.totalMonthPnl >= 0 ? "var(--app-success)" : "var(--app-danger)"} accentBg={monthSummary.totalMonthPnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)"} />
-        <SummaryCard label="Total Trades" value={monthSummary.totalTrades} valueColor="var(--app-text)" icon="TR" accent="var(--app-primary)" accentBg="var(--app-primary-soft)" />
-        <SummaryCard label="Win Days" value={monthSummary.winDays} valueColor="var(--app-success)" icon="+" accent="var(--app-success)" accentBg="var(--app-success-bg)" />
-        <SummaryCard label="Loss Days" value={monthSummary.lossDays} valueColor="var(--app-danger)" icon="-" accent="var(--app-danger)" accentBg="var(--app-danger-bg)" />
-      </div>
-
       <div className="calendar-panel" style={{ background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)", borderRadius: "24px", padding: "20px", boxShadow: "var(--app-shadow-card)", border: "1px solid var(--app-card-border)", marginBottom: "18px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "14px",
+          }}
+        >
+          <div style={{ fontSize: "clamp(22px, 5vw, 24px)", fontWeight: "bold", color: "var(--app-text)" }}>
+            {formatMonthLabel(currentMonth)}
+          </div>
+
+          <div
+            style={{
+              padding: isMobile ? "10px 12px" : "10px 14px",
+              borderRadius: "14px",
+              background: monthSummary.totalMonthPnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)",
+              color: monthSummary.totalMonthPnl >= 0 ? "var(--app-success)" : "var(--app-danger)",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Monthly PnL
+            </span>
+            <span style={{ fontSize: "18px" }}>{formatMoneyPretty(monthSummary.totalMonthPnl)}</span>
+          </div>
+        </div>
+
         <div className="calendar-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
           <button className="calendar-month-button" type="button" onClick={goToPreviousMonth} style={{ border: "none", borderRadius: "12px", padding: "10px 14px", background: "var(--app-nav)", color: "#ffffff", fontWeight: "bold", cursor: "pointer" }}>
             Previous
           </button>
 
-          <div style={{ fontSize: "clamp(22px, 5vw, 24px)", fontWeight: "bold", color: "var(--app-text)", textAlign: "center" }}>
-            {formatMonthLabel(currentMonth)}
+          <div style={{ fontSize: "14px", color: "var(--app-text-soft)", textAlign: "center" }}>
+            Tap any day to review that session.
           </div>
 
           <button className="calendar-month-button" type="button" onClick={goToNextMonth} style={{ border: "none", borderRadius: "12px", padding: "10px 14px", background: "var(--app-nav)", color: "#ffffff", fontWeight: "bold", cursor: "pointer" }}>
@@ -403,86 +392,22 @@ function CalendarPage() {
             message="We're building your calendar view."
             compact
           />
-        ) : isMobile ? (
-          <div style={{ display: "grid", gap: "10px" }}>
-            {monthDates.map((date) => {
-              const key = getDateKey(date);
-              const dayData = dailyMap[key];
-              const isSelected = selectedDate === key;
-
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setSelectedDate((prev) => (prev === key ? "" : key))}
-                  style={{
-                    width: "100%",
-                    border: isSelected ? "1px solid var(--app-primary)" : "1px solid var(--app-card-border)",
-                    borderRadius: "18px",
-                    padding: "14px",
-                    background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
-                    boxShadow: isSelected ? "var(--app-shadow-card)" : "var(--app-shadow-soft)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--app-text)", marginBottom: "4px" }}>
-                        {date.toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </div>
-                      <div style={{ fontSize: "13px", color: "var(--app-text-soft)" }}>
-                        {dayData?.tradeCount ? `${dayData.tradeCount} trade${dayData.tradeCount === 1 ? "" : "s"}` : "No trades"}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        borderRadius: "999px",
-                        padding: "7px 11px",
-                        fontWeight: 800,
-                        fontSize: "13px",
-                        background:
-                          dayData?.pnl > 0
-                            ? "var(--app-success-bg)"
-                            : dayData?.pnl < 0
-                            ? "var(--app-danger-bg)"
-                            : "var(--app-card-muted)",
-                        color:
-                          dayData?.pnl > 0
-                            ? "var(--app-success)"
-                            : dayData?.pnl < 0
-                            ? "var(--app-danger)"
-                            : "var(--app-text-soft)",
-                      }}
-                    >
-                      {dayData ? formatMoney(dayData.pnl) : "--"}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
         ) : (
           <>
-            <div className="calendar-grid-scroll" style={{ overflowX: "auto", paddingBottom: "6px" }}>
-              <div className="calendar-grid-inner" style={{ minWidth: "680px" }}>
-                <div className="calendar-weekdays" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "10px", marginBottom: "10px" }}>
+            <div className="calendar-grid-scroll" style={{ overflowX: "hidden", paddingBottom: 0 }}>
+              <div className="calendar-grid-inner" style={{ minWidth: 0, width: "100%" }}>
+                <div className="calendar-weekdays" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: isMobile ? "4px" : "10px", marginBottom: isMobile ? "6px" : "10px" }}>
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} style={{ textAlign: "center", fontWeight: "bold", color: "var(--app-text-soft)", fontSize: "13px", paddingBottom: "4px" }}>
-                      {day}
+                    <div key={day} style={{ textAlign: "center", fontWeight: "bold", color: "var(--app-text-soft)", fontSize: isMobile ? "11px" : "13px", paddingBottom: isMobile ? "2px" : "4px" }}>
+                      {isMobile ? day.slice(0, 2) : day}
                     </div>
                   ))}
                 </div>
 
-                <div className="calendar-days" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "10px" }}>
+                <div className="calendar-days" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: isMobile ? "4px" : "10px" }}>
                   {calendarCells.map((date, index) => {
                     if (!date) {
-                      return <div className="calendar-day-empty" key={`empty-${index}`} style={{ minHeight: "118px", borderRadius: "16px", background: "transparent" }} />;
+                      return <div className="calendar-day-empty" key={`empty-${index}`} style={{ minHeight: isMobile ? "72px" : "118px", borderRadius: isMobile ? "12px" : "16px", background: "transparent" }} />;
                     }
 
                     const key = getDateKey(date);
@@ -520,8 +445,8 @@ function CalendarPage() {
                         type="button"
                         onClick={() => setSelectedDate((prev) => (prev === key ? "" : key))}
                         style={{
-                          minHeight: "118px",
-                          borderRadius: "18px",
+                          minHeight: isMobile ? "72px" : "118px",
+                          borderRadius: isMobile ? "14px" : "18px",
                           background,
                           border,
                           padding: 0,
@@ -532,23 +457,29 @@ function CalendarPage() {
                           overflow: "hidden",
                         }}
                       >
-                        <div style={{ width: "100%", height: "6px", background: topAccent }} />
-                        <div className="calendar-day-body" style={{ padding: "12px" }}>
-                          <div style={{ fontWeight: "bold", color: "var(--app-text)", marginBottom: "10px", fontSize: "15px" }}>
+                        <div style={{ width: "100%", height: isMobile ? "4px" : "6px", background: topAccent }} />
+                        <div className="calendar-day-body" style={{ padding: isMobile ? "6px" : "12px" }}>
+                          <div style={{ fontWeight: "bold", color: "var(--app-text)", marginBottom: isMobile ? "6px" : "10px", fontSize: isMobile ? "12px" : "15px" }}>
                             {date.getDate()}
                           </div>
 
                           {dayData ? (
                             <>
-                              <div style={{ fontSize: "14px", fontWeight: "bold", color: pnlColor, marginBottom: "6px" }}>
+                              <div style={{ fontSize: isMobile ? "10px" : "14px", fontWeight: "bold", color: pnlColor, marginBottom: isMobile ? "4px" : "6px", lineHeight: 1.2 }}>
                                 {formatMoney(dayData.pnl)}
                               </div>
-                              <div style={{ display: "inline-block", fontSize: "12px", color: "var(--app-text)", background: "rgba(255,255,255,0.45)", borderRadius: "999px", padding: "4px 8px" }}>
-                                {dayData.tradeCount} trade{dayData.tradeCount === 1 ? "" : "s"}
-                              </div>
+                              {isMobile ? (
+                                <div style={{ fontSize: "10px", color: "var(--app-text-soft)" }}>
+                                  {dayData.tradeCount} trade{dayData.tradeCount === 1 ? "" : "s"}
+                                </div>
+                              ) : (
+                                <div style={{ display: "inline-block", fontSize: "12px", color: "var(--app-text)", background: "rgba(255,255,255,0.45)", borderRadius: "999px", padding: "4px 8px" }}>
+                                  {dayData.tradeCount} trade{dayData.tradeCount === 1 ? "" : "s"}
+                                </div>
+                              )}
                             </>
                           ) : (
-                            <div style={{ fontSize: "12px", color: "var(--app-text-muted)" }}>No trades</div>
+                            <div style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--app-text-muted)" }}>No trades</div>
                           )}
                         </div>
                       </button>
@@ -558,19 +489,43 @@ function CalendarPage() {
               </div>
             </div>
 
-            <div className="calendar-legend" style={{ marginTop: "18px", display: "flex", gap: "18px", flexWrap: "wrap", color: "var(--app-text-soft)", fontSize: "13px" }}>
+            <div
+              className="calendar-legend"
+              style={{
+                marginTop: "18px",
+                display: "flex",
+                gap: "18px",
+                flexWrap: "wrap",
+                color: "var(--app-text-soft)",
+                fontSize: "13px",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ width: "14px", height: "14px", borderRadius: "999px", background: "var(--app-success-bg)", border: "1px solid var(--app-success-border)", display: "inline-block" }} />
-                Winning day
+                Winning Days: <strong style={{ color: "var(--app-text)" }}>{monthSummary.winDays}</strong>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ width: "14px", height: "14px", borderRadius: "999px", background: "var(--app-danger-bg)", border: "1px solid var(--app-danger-border)", display: "inline-block" }} />
-                Losing day
+                Losing Days: <strong style={{ color: "var(--app-text)" }}>{monthSummary.lossDays}</strong>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ width: "14px", height: "14px", borderRadius: "999px", background: "var(--app-card-muted)", border: "1px solid var(--app-input-border)", display: "inline-block" }} />
                 Breakeven day
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "10px",
+                paddingTop: "12px",
+                borderTop: "1px solid var(--app-card-border)",
+                color: "var(--app-text-soft)",
+                fontSize: "14px",
+              }}
+            >
+              Total Trades: <strong style={{ color: "var(--app-text)" }}>{monthSummary.totalTrades}</strong>
             </div>
           </>
         )}
@@ -593,70 +548,92 @@ function CalendarPage() {
               compact
             />
           ) : (
-            <div style={{ display: "grid", gap: "12px" }}>
-              {selectedTrades.map((trade) => {
-                const pnl = calculateTradePnl(trade);
+            <>
+              <div style={{ display: "grid", gap: "12px" }}>
+                {displayedSelectedTrades.map((trade) => {
+                  const pnl = calculateTradePnl(trade);
 
-                return (
-                  <div key={trade._id} style={{ border: "1px solid var(--app-card-border)", borderRadius: "18px", padding: "16px", background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" }}>
-                      <div>
-                        <div style={{ fontWeight: "bold", fontSize: "17px", color: "var(--app-text)", marginBottom: "4px" }}>
-                          {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
+                  return (
+                    <div key={trade._id} style={{ border: "1px solid var(--app-card-border)", borderRadius: "18px", padding: "16px", background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" }}>
+                        <div>
+                          <div style={{ fontWeight: "bold", fontSize: "17px", color: "var(--app-text)", marginBottom: "4px" }}>
+                            {trade.symbol || "Trade"} | {(trade.direction || "").toUpperCase()}
+                          </div>
+                          <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
+                            Entry: {trade.entry ?? "--"} | Exit: {trade.exit ?? "--"} | Contracts: {trade.contracts ?? "--"}
+                          </div>
                         </div>
-                        <div style={{ color: "var(--app-text-soft)", fontSize: "14px" }}>
-                          Entry: {trade.entry ?? "--"} | Exit: {trade.exit ?? "--"} | Contracts: {trade.contracts ?? "--"}
+
+                        <div
+                          style={{
+                            alignSelf: "center",
+                            fontWeight: "bold",
+                            fontSize: "16px",
+                            color: pnl >= 0 ? "var(--app-success)" : "var(--app-danger)",
+                            background: pnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)",
+                            borderRadius: "999px",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          {formatMoneyPretty(pnl)}
                         </div>
                       </div>
 
-                      <div
-                        style={{
-                          alignSelf: "center",
-                          fontWeight: "bold",
-                          fontSize: "16px",
-                          color: pnl >= 0 ? "var(--app-success)" : "var(--app-danger)",
-                          background: pnl >= 0 ? "var(--app-success-bg)" : "var(--app-danger-bg)",
-                          borderRadius: "999px",
-                          padding: "8px 12px",
-                        }}
-                      >
-                        {formatMoneyPretty(pnl)}
+                      {trade.notes ? (
+                        <div style={{ fontSize: "14px", color: "var(--app-text)", marginBottom: "12px", whiteSpace: "pre-wrap" }}>
+                          {trade.notes}
+                        </div>
+                      ) : null}
+
+                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        <button type="button" onClick={() => navigate(`/add-trade?edit=${trade._id}`)} style={{ background: "var(--app-nav)", color: "#fff", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer", fontWeight: "bold" }}>
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteTrade(trade._id)}
+                          disabled={deletingId === trade._id}
+                          style={{
+                            background: "var(--app-danger)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "10px",
+                            padding: "8px 12px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                            opacity: deletingId === trade._id ? 0.7 : 1,
+                          }}
+                        >
+                          {deletingId === trade._id ? "Deleting..." : "Delete"}
+                        </button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
 
-                    {trade.notes ? (
-                      <div style={{ fontSize: "14px", color: "var(--app-text)", marginBottom: "12px", whiteSpace: "pre-wrap" }}>
-                        {trade.notes}
-                      </div>
-                    ) : null}
-
-                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                      <button type="button" onClick={() => navigate(`/add-trade?edit=${trade._id}`)} style={{ background: "var(--app-nav)", color: "#fff", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer", fontWeight: "bold" }}>
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => deleteTrade(trade._id)}
-                        disabled={deletingId === trade._id}
-                        style={{
-                          background: "var(--app-danger)",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          padding: "8px 12px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          opacity: deletingId === trade._id ? 0.7 : 1,
-                        }}
-                      >
-                        {deletingId === trade._id ? "Deleting..." : "Delete"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+              {selectedTrades.length > displayedSelectedTrades.length ? (
+                <div style={{ marginTop: "16px", display: "flex", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleSelectedTrades((prev) => prev + SELECTED_TRADES_STEP)}
+                    style={{
+                      border: "1px solid var(--app-primary-border)",
+                      borderRadius: "12px",
+                      padding: "10px 16px",
+                      background: "var(--app-primary-soft)",
+                      color: "var(--app-chip-text)",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Load More
+                  </button>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       )}
@@ -665,5 +642,3 @@ function CalendarPage() {
 }
 
 export default CalendarPage;
-
-

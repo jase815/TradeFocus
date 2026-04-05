@@ -490,6 +490,9 @@ function AppShell({ title, subtitle, children }) {
             <Link to="/add-trade" style={navLinkStyle(location.pathname === "/add-trade")}>
               Add Trade
             </Link>
+            <Link to="/import-trades" style={navLinkStyle(location.pathname === "/import-trades")}>
+              Import Trades
+            </Link>
             <Link to="/settings" style={navLinkStyle(location.pathname === "/settings")}>
               Settings
             </Link>

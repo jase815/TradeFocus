@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "../styles";
 import { API_URL } from "../config";
+
+const INITIAL_VISIBLE_TRADES = 8;
+const LOAD_MORE_STEP = 8;
 
 function formatMoney(value) {
   const number = Number(value || 0);
@@ -16,6 +19,17 @@ function TradeList({
   reviewTrade,
   reviewingTradeId,
 }) {
+  const [visibleTrades, setVisibleTrades] = useState(INITIAL_VISIBLE_TRADES);
+
+  useEffect(() => {
+    setVisibleTrades(INITIAL_VISIBLE_TRADES);
+  }, [trades.length]);
+
+  const displayedTrades = useMemo(
+    () => trades.slice(0, visibleTrades),
+    [trades, visibleTrades]
+  );
+
   if (!trades.length) {
     return (
       <div className="trade-list-card" style={styles.card}>
@@ -33,7 +47,7 @@ function TradeList({
       </div>
 
       <div style={styles.tradeList}>
-        {trades.map((trade) => {
+        {displayedTrades.map((trade) => {
           const pnl = calculateTradePnl(trade);
           const result = detectResult(trade);
 
@@ -126,10 +140,20 @@ function TradeList({
           );
         })}
       </div>
+
+      {trades.length > displayedTrades.length ? (
+        <div style={{ marginTop: "16px", display: "flex", justifyContent: "center" }}>
+          <button
+            type="button"
+            onClick={() => setVisibleTrades((prev) => prev + LOAD_MORE_STEP)}
+            style={styles.secondaryButton}
+          >
+            Load More
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export default TradeList;
-
-

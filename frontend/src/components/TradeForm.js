@@ -277,66 +277,14 @@ function TradeForm({
       className="trade-form-shell"
       style={{
         ...styles.card,
-        padding: "clamp(16px, 3vw, 20px)",
+        padding: "clamp(18px, 3vw, 22px)",
       }}
     >
       <div
-        className="trade-form-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "12px",
-          marginBottom: "14px",
-          flexWrap: "wrap",
-        }}
-      >
-        <h2 style={{ ...styles.cardTitle, margin: 0 }}>
-          {isEditing ? "Edit Trade" : "Add Trade"}
-        </h2>
-
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-          <div
-            style={{
-              padding: "8px 12px",
-              borderRadius: "999px",
-              fontSize: "13px",
-              fontWeight: "bold",
-              ...resultBadgeStyle(previewResult),
-            }}
-          >
-            {previewResult ? previewResult.toUpperCase() : "NO RESULT YET"}
-          </div>
-
-          <button
-            type="button"
-            onClick={clearForm}
-            style={{
-              background: "var(--app-nav)",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "999px",
-              width: "34px",
-              height: "34px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-              lineHeight: 1,
-              display: "grid",
-              placeItems: "center",
-            }}
-            title="Clear form"
-          >
-            X
-          </button>
-        </div>
-      </div>
-
-      <div
         className="trade-form-summary"
         style={{
-          marginBottom: "16px",
-          padding: "14px",
+          marginBottom: "18px",
+          padding: "16px",
           background: "var(--app-card-muted)",
           border: "1px solid var(--app-card-border)",
           borderRadius: "14px",
@@ -359,6 +307,7 @@ function TradeForm({
             justifyContent: "space-between",
             gap: "12px",
             flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
           <div>
@@ -392,6 +341,18 @@ function TradeForm({
               {resolvedDisplayPointValue || "--"}
             </div>
           </div>
+
+          <div
+            style={{
+              padding: "8px 12px",
+              borderRadius: "999px",
+              fontSize: "13px",
+              fontWeight: "bold",
+              ...resultBadgeStyle(previewResult),
+            }}
+          >
+            {previewResult ? previewResult.toUpperCase() : "NO RESULT YET"}
+          </div>
         </div>
       </div>
 
@@ -400,13 +361,11 @@ function TradeForm({
         placeholder="Symbol / Instrument (ex: NQ, ES, BTC)"
         value={symbol}
         onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-        style={styles.input}
+        style={{ ...styles.input, marginBottom: "16px" }}
       />
 
-      <div style={{ marginBottom: "14px" }}>
-        <div style={sectionLabel("Trade Screenshot (for journaling)")}>
-          Trade Screenshot (for journaling)
-        </div>
+      <div style={{ marginBottom: "18px" }}>
+        <div style={sectionLabel("Trade Screenshot")}>Trade Screenshot</div>
 
         <div
           className="trade-form-upload"
@@ -448,10 +407,10 @@ function TradeForm({
                   fontSize: "15px",
                   color: "var(--app-text)",
                   fontWeight: 700,
-                  marginBottom: "6px",
+                  marginBottom: "4px",
                 }}
               >
-                Drag and drop a screenshot here
+                Upload a screenshot
               </div>
               <div
                 style={{
@@ -460,8 +419,7 @@ function TradeForm({
                   lineHeight: 1.6,
                 }}
               >
-                Upload a trade screenshot to attach it to the journal entry. You can preview it,
-                replace it, or fine-tune the crop before saving.
+                Upload a screenshot
               </div>
               {screenshotFile ? (
                 <div
@@ -615,7 +573,7 @@ function TradeForm({
         ) : null}
       </div>
 
-      <div style={{ marginBottom: "14px" }}>
+      <div style={{ marginBottom: "18px" }}>
         <div style={sectionLabel("Direction")}>Direction</div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
@@ -654,7 +612,7 @@ function TradeForm({
         </div>
       </div>
 
-      <div style={styles.twoCol}>
+      <div style={{ ...styles.twoCol, marginBottom: "4px" }}>
         <input
           type="number"
           placeholder="Contracts / Size"
@@ -675,7 +633,7 @@ function TradeForm({
         />
       </div>
 
-      <div style={styles.twoCol}>
+      <div style={{ ...styles.twoCol, marginBottom: "4px" }}>
         <input
           type="date"
           value={tradeDate}
@@ -691,7 +649,7 @@ function TradeForm({
         />
       </div>
 
-      <div style={styles.twoCol}>
+      <div style={{ ...styles.twoCol, marginBottom: "4px" }}>
         <input
           type="number"
           placeholder="Entry"
@@ -715,6 +673,7 @@ function TradeForm({
         style={{
           ...styles.textarea,
           minHeight: "110px",
+          marginBottom: "18px",
         }}
       />
 
@@ -727,15 +686,23 @@ function TradeForm({
             <button onClick={cancelEdit} style={styles.ghostButton}>
               Cancel
             </button>
+            <button type="button" onClick={clearForm} style={styles.secondaryButton}>
+              Clear Form
+            </button>
           </>
-          ) : (
+        ) : (
+          <>
             <button onClick={addTrade} style={styles.primaryButton}>
               Add Trade
             </button>
-          )}
+            <button type="button" onClick={clearForm} style={styles.ghostButton}>
+              Clear Form
+            </button>
+          </>
+        )}
       </div>
 
-      <div style={{ marginTop: "16px" }}>
+      <div style={{ marginTop: "18px" }}>
         <button
           type="button"
           onClick={() => setShowPresetPanel(!showPresetPanel)}

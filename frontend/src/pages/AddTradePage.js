@@ -571,23 +571,18 @@ function AddTradePage() {
       title={isEditing ? "Edit Trade" : "Add Trade"}
       subtitle="Log a trade manually, attach screenshots, and crop them before saving."
     >
-      <div style={{ marginBottom: "18px" }}>
-        <StatusBanner
-          tone={status.message ? status.tone : "info"}
-          title={status.title || (isEditing ? "Edit Trade" : "Add Trade")}
-          message={
-            status.message ||
-            "Capture the setup, review the details, and save when the trade record looks right."
-          }
-        />
-      </div>
+      {status.message ? (
+        <div style={{ marginBottom: "16px", maxWidth: "760px", width: "100%" }}>
+          <StatusBanner tone={status.tone} title={status.title} message={status.message} />
+        </div>
+      ) : null}
 
       {loading ? (
-        <div style={{ width: "100%", maxWidth: "820px" }}>
+        <div style={{ width: "100%", maxWidth: "760px" }}>
           <StatusBanner tone="info" title="Loading" message="Preparing your trade form." />
         </div>
       ) : (
-        <div style={{ maxWidth: "820px", width: "100%" }}>
+        <div style={{ maxWidth: "760px", width: "100%" }}>
           <TradeForm
             symbol={symbol}
             setSymbol={setSymbol}
@@ -640,4 +635,3 @@ function AddTradePage() {
 }
 
 export default AddTradePage;
-
