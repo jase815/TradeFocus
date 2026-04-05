@@ -74,44 +74,6 @@ function AuthLayout({ eyebrow, title, subtitle, children }) {
             >
               {subtitle}
             </p>
-
-            <div
-              style={{
-                marginTop: "22px",
-                display: "grid",
-                gap: "12px",
-              }}
-            >
-              {[
-                "Track trades, screenshots, and AI reviews in one place.",
-                "Built for mobile-first journaling without losing desktop depth.",
-                "Dark-first workspace with light mode still available anytime.",
-              ].map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "10px",
-                    color: "var(--app-text-soft)",
-                    fontSize: "14px",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "999px",
-                      background: "var(--app-primary)",
-                      marginTop: "8px",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div style={{ width: "100%", maxWidth: "460px", justifySelf: "center" }}>{children}</div>
