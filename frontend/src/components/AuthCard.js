@@ -1,74 +1,48 @@
 import React from "react";
 import styles from "../styles";
 
-function AuthCard({
-  email,
-  password,
-  setEmail,
-  setPassword,
-  handleSignup,
-  handleLogin,
-  handleLogout,
-  isSubmitting = false,
-  activeAction = "",
-}) {
-  const hasToken = !!localStorage.getItem("token");
-
+function AuthCard({ title, subtitle, children, footer }) {
   return (
-    <div style={{ ...styles.card, maxWidth: "420px", margin: "0 auto" }}>
-      <h2 style={styles.cardTitle}>Account</h2>
+    <div
+      style={{
+        ...styles.card,
+        maxWidth: "440px",
+        margin: "0 auto",
+        padding: "clamp(20px, 4vw, 28px)",
+        background: "linear-gradient(180deg, color-mix(in srgb, var(--app-card) 88%, var(--app-surface-alt) 12%) 0%, var(--app-card-muted) 100%)",
+      }}
+    >
+      <h2 style={{ ...styles.cardTitle, marginBottom: "10px" }}>{title}</h2>
 
-      <div style={{ fontSize: "13px", color: "var(--app-text-soft)", marginBottom: "14px", lineHeight: 1.55 }}>
-        {hasToken ? "You are currently logged in." : "Sign in or create an account to continue."}
-      </div>
-
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={styles.input}
-        disabled={isSubmitting}
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={styles.input}
-        disabled={isSubmitting}
-      />
-
-      {!hasToken ? (
-        <div style={styles.buttonRow}>
-          <button
-            onClick={handleSignup}
-            style={{ ...styles.primaryButton, flex: "1 1 160px", opacity: isSubmitting ? 0.72 : 1 }}
-            disabled={isSubmitting}
-          >
-            {activeAction === "signup" ? "Creating Account..." : "Sign Up"}
-          </button>
-
-          <button
-            onClick={handleLogin}
-            style={{ ...styles.secondaryButton, flex: "1 1 160px", opacity: isSubmitting ? 0.72 : 1 }}
-            disabled={isSubmitting}
-          >
-            {activeAction === "login" ? "Signing In..." : "Login"}
-          </button>
+      {subtitle ? (
+        <div
+          style={{
+            fontSize: "14px",
+            color: "var(--app-text-soft)",
+            marginBottom: "18px",
+            lineHeight: 1.6,
+          }}
+        >
+          {subtitle}
         </div>
-      ) : (
-        <div style={styles.buttonRow}>
-          <button onClick={handleLogout} style={{ ...styles.deleteButton, flex: 1 }}>
-            Logout
-          </button>
-        </div>
-      )}
+      ) : null}
 
-      <div style={{ marginTop: "14px", fontSize: "12px", color: "var(--app-text-muted)", textAlign: "center", lineHeight: 1.5 }}>
-        Your account stores trades, presets, and AI reviews securely.
-      </div>
+      {children}
+
+      {footer ? (
+        <div
+          style={{
+            marginTop: "18px",
+            paddingTop: "16px",
+            borderTop: "1px solid var(--app-card-border)",
+            fontSize: "13px",
+            color: "var(--app-text-soft)",
+            lineHeight: 1.6,
+          }}
+        >
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }

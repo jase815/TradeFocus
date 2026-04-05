@@ -79,16 +79,36 @@ app.use("/api/settings", settingsRoutes);
 
 app.post("/signup", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const username = String(req.body.username || "").trim();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const password = String(req.body.password || "");
+
+    if (!username) {
+      return res.status(400).json({ message: "Username is required" });
+    }
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ message: "That username is already taken" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "That email is already in use" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
+      username,
       email,
       password: hashedPassword,
       subscriptionActive: false,
@@ -96,24 +116,46 @@ app.post("/signup", async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "User created" });
+    res.json({ message: "Your account has been created" });
   } catch (error) {
+    if (error && error.code === 11000) {
+      if (error.keyPattern?.username) {
+        return res.status(400).json({ message: "That username is already taken" });
+      }
+
+      if (error.keyPattern?.email) {
+        return res.status(400).json({ message: "That email is already in use" });
+      }
+    }
+
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const identifier = String(req.body.identifier || req.body.email || "").trim();
+    const password = String(req.body.password || "");
 
-    const user = await User.findOne({ email });
+    if (!identifier) {
+      return res.status(400).json({ message: "Email or username is required" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const normalizedEmail = identifier.toLowerCase();
+    const user = await User.findOne({
+      $or: [{ email: normalizedEmail }, { username: identifier }],
+    });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({ message: "Account not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Wrong password" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {

@@ -6,13 +6,25 @@ import AddTradePage from "./pages/AddTradePage";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import { ThemeProvider } from "./context/ThemeContext";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function PublicAuthRoute({ children }) {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -24,6 +36,22 @@ function App() {
       <Router>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
+          <Route
+            path="/login"
+            element={
+              <PublicAuthRoute>
+                <LoginPage />
+              </PublicAuthRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicAuthRoute>
+                <SignupPage />
+              </PublicAuthRoute>
+            }
+          />
 
           <Route
             path="/"

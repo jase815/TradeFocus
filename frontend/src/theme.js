@@ -107,11 +107,11 @@ export const themes = {
   dark: darkTheme,
 };
 
-export function getTheme(mode = "light") {
-  return themes[mode] || lightTheme;
+export function getTheme(mode = "dark") {
+  return themes[mode] || darkTheme;
 }
 
-export function applyThemeMode(mode = "light") {
+export function applyThemeMode(mode = "dark") {
   if (typeof document === "undefined") return;
 
   const theme = getTheme(mode);
@@ -163,4 +163,4 @@ export function applyThemeMode(mode = "light") {
   root.style.setProperty("color-scheme", theme.mode);
 }
 
-export default lightTheme;
+export default darkTheme;

@@ -4,16 +4,17 @@ import { applyThemeMode, getTheme } from "../theme";
 const STORAGE_KEY = "trade-journal-theme";
 
 const ThemeContext = createContext({
-  themeMode: "light",
-  theme: getTheme("light"),
+  themeMode: "dark",
+  theme: getTheme("dark"),
   setThemeMode: () => {},
   toggleThemeMode: () => {},
 });
 
 function getStoredThemeMode() {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "dark" ? "dark" : "light";
+  if (stored === "light") return "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }) {
