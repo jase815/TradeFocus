@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import StatusBanner from "../components/StatusBanner";
 import { API_URL } from "../config";
@@ -291,6 +292,7 @@ function StatCard({ label, value, valueColor = "var(--app-text)", subtext = "", 
 }
 
 function ChartsPage() {
+  const navigate = useNavigate();
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState({ tone: "info", title: "", message: "" });
@@ -493,8 +495,25 @@ function ChartsPage() {
           border: "1px solid var(--app-card-border)",
         }}
       >
-        <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--app-text)", marginBottom: "16px" }}>
-          Recent Trades
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: "16px" }}>
+          <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--app-text)" }}>
+            Recent Trades
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/analytics")}
+            style={{
+              border: "1px solid var(--app-primary-border)",
+              borderRadius: "12px",
+              padding: "10px 14px",
+              background: "var(--app-primary-soft)",
+              color: "var(--app-chip-text)",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Open Analytics
+          </button>
         </div>
 
         {recentTrades.length === 0 ? (
@@ -554,5 +573,3 @@ function ChartsPage() {
 }
 
 export default ChartsPage;
-
-

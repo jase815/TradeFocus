@@ -4,6 +4,7 @@ import AppShell from "../components/AppShell";
 import StatusBanner from "../components/StatusBanner";
 import TradeForm from "../components/TradeForm";
 import { API_URL } from "../config";
+import usePremiumAccess from "../hooks/usePremiumAccess";
 import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const instrumentConfig = {
@@ -95,6 +96,7 @@ async function buildCroppedScreenshotBlob(file, previewUrl, cropZoom, cropX, cro
 
 function AddTradePage() {
   const navigate = useNavigate();
+  const { isPremium } = usePremiumAccess();
   const [searchParams] = useSearchParams();
   const editTradeId = searchParams.get("edit") || "";
 
@@ -583,6 +585,24 @@ function AddTradePage() {
         </div>
       ) : (
         <div style={{ maxWidth: "760px", width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
+            <button
+              type="button"
+              onClick={() => navigate("/import-trades")}
+              style={{
+                border: "1px solid var(--app-primary-border)",
+                borderRadius: "14px",
+                padding: "10px 14px",
+                background: "var(--app-primary-soft)",
+                color: "var(--app-chip-text)",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              Import CSV{isPremium ? "" : " Pro"}
+            </button>
+          </div>
+
           <TradeForm
             symbol={symbol}
             setSymbol={setSymbol}

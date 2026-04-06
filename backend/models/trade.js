@@ -25,6 +25,7 @@ const tradeSchema = new mongoose.Schema({
   importBatchId: { type: String, default: "" },
   externalTradeId: { type: String, default: "" },
   importFingerprint: { type: String, default: "" },
+  folderId: { type: String, default: "" },
   entryTime: { type: String, default: "" },
   exitTime: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },

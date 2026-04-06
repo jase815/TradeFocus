@@ -25,6 +25,16 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  stripeCustomerId: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  stripeSubscriptionId: {
+    type: String,
+    default: "",
+    trim: true,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

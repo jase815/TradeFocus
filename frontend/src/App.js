@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import ChartsPage from "./pages/ChartsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import JournalPage from "./pages/JournalPage";
 import AddTradePage from "./pages/AddTradePage";
 import CalendarPage from "./pages/CalendarPage";
@@ -77,6 +78,15 @@ function App() {
             element={
               <PrivateRoute>
                 <CalendarPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <PrivateRoute>
+                <AnalyticsPage />
               </PrivateRoute>
             }
           />

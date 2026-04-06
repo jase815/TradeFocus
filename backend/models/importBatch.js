@@ -33,6 +33,10 @@ const importBatchSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  notes: {
+    type: String,
+    default: "",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

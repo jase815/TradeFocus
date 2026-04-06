@@ -1,14 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import StatusBanner from "../components/StatusBanner";
+import usePremiumAccess from "../hooks/usePremiumAccess";
 import styles from "../styles";
 import { API_URL } from "../config";
+import handleUpgradeToPro from "../utils/handleUpgradeToPro";
 import { getFriendlyErrorMessage, readResponsePayload } from "../utils/apiFeedback";
 
 const SOURCE_OPTIONS = [
   { value: "apex", label: "Apex" },
   { value: "topstep", label: "Topstep" },
+  { value: "alpha-futures", label: "Alpha Futures" },
+  { value: "take-profit-trader", label: "Take Profit Trader" },
+  { value: "my-funded-futures", label: "My Funded Futures" },
+  { value: "bulenox", label: "Bulenox" },
+  { value: "earn2trade", label: "Earn2Trade" },
+  { value: "tradeday", label: "TradeDay" },
+  { value: "tickticktrader", label: "TickTickTrader" },
+  { value: "funded-futures-network", label: "Funded Futures Network" },
   { value: "generic", label: "Generic CSV" },
 ];
 
@@ -56,11 +65,15 @@ function SummaryPill({ label, value, tone = "default" }) {
 }
 
 function ImportTradesPage() {
-  const navigate = useNavigate();
+  const { isPremium, loading: premiumLoading } = usePremiumAccess();
   const [source, setSource] = useState("apex");
   const [file, setFile] = useState(null);
+  const [folders, setFolders] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState("");
   const [access, setAccess] = useState({ isPremium: false, availableSources: [] });
   const [preview, setPreview] = useState(null);
+  const [showImportNotes, setShowImportNotes] = useState(false);
+  const [importNotes, setImportNotes] = useState("");
   const [status, setStatus] = useState({
     tone: "info",
     title: "Import Trades",
@@ -74,6 +87,18 @@ function ImportTradesPage() {
   useEffect(() => {
     fetchAccess();
   }, []);
+
+  useEffect(() => {
+    if (!premiumLoading && isPremium) {
+      fetchFolders();
+    }
+
+    if (!premiumLoading && !isPremium) {
+      setFolders([]);
+      setSelectedFolderId("");
+      setPreview(null);
+    }
+  }, [isPremium, premiumLoading]);
 
   useEffect(() => {
     setPreview(null);
@@ -128,6 +153,25 @@ function ImportTradesPage() {
     }
   };
 
+  const fetchFolders = async () => {
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`${API_URL}/api/folders`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await readResponsePayload(res);
+
+      if (res.ok) {
+        setFolders(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      setFolders([]);
+    }
+  };
+
   const handleFileChange = (event) => {
     const nextFile = event.target.files?.[0] || null;
 
@@ -144,11 +188,15 @@ function ImportTradesPage() {
     setFile(nextFile);
   };
 
-  const buildImportFormData = () => {
+  const buildImportFormData = ({ includeNotes = false } = {}) => {
     const formData = new FormData();
     formData.append("source", source);
     if (file) {
       formData.append("file", file);
+    }
+    if (includeNotes) {
+      formData.append("importNotes", importNotes);
+      formData.append("folderId", selectedFolderId);
     }
     return formData;
   };
@@ -238,7 +286,7 @@ function ImportTradesPage() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: buildImportFormData(),
+        body: buildImportFormData({ includeNotes: true }),
       });
       const data = await readResponsePayload(res);
 
@@ -278,7 +326,7 @@ function ImportTradesPage() {
 
   const confirmDisabled =
     !preview ||
-    !access.isPremium ||
+    !isPremium ||
     !preview.summary ||
     preview.summary.readyToImport === 0 ||
     isConfirming;
@@ -292,6 +340,31 @@ function ImportTradesPage() {
         <StatusBanner tone={status.tone} title={status.title} message={status.message} />
       </div>
 
+      {premiumLoading ? (
+        <div style={{ ...styles.lockedCard, maxWidth: "980px", color: "var(--app-text-soft)" }}>
+          Checking Pro import access...
+        </div>
+      ) : null}
+
+      {!premiumLoading && !isPremium ? (
+        <div style={{ ...styles.lockedCard, maxWidth: "980px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: "22px", fontWeight: 800, color: "var(--app-text)", marginBottom: "8px" }}>
+                CSV Import is Pro
+              </div>
+              <div style={{ color: "var(--app-text-soft)", fontSize: "14px", lineHeight: 1.7, maxWidth: "720px" }}>
+                Unlock CSV imports for Apex, Topstep, and other trade exports so you can bring your history into TradeFocus in minutes.
+              </div>
+            </div>
+            <button type="button" onClick={handleUpgradeToPro} style={styles.primaryButton}>
+              Upgrade to Pro
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {!premiumLoading && isPremium ? (
       <div style={{ maxWidth: "980px", display: "grid", gap: "18px" }}>
         <div style={styles.card}>
           <div
@@ -307,8 +380,8 @@ function ImportTradesPage() {
             <div>
               <h2 style={{ ...styles.cardTitle, marginBottom: "8px" }}>Prop Firm Import</h2>
               <div style={{ color: "var(--app-text-soft)", fontSize: "14px", lineHeight: 1.6 }}>
-                Preview your import for free. Upgrade to Pro to confirm and import all valid trades
-                into your journal, calendar, and analytics.
+                Import valid trades from Apex, Topstep, and other CSV exports into your journal,
+                calendar, and analytics.
               </div>
             </div>
 
@@ -354,6 +427,20 @@ function ImportTradesPage() {
             </div>
           </div>
 
+          <div style={{ maxWidth: "420px" }}>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--app-text)", marginBottom: "8px" }}>
+              Assign to Folder
+            </div>
+            <select value={selectedFolderId} onChange={(e) => setSelectedFolderId(e.target.value)} style={styles.input}>
+              <option value="">No Folder</option>
+              {folders.map((folder) => (
+                <option key={folder._id} value={folder._id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ color: "var(--app-text-soft)", fontSize: "13px", marginTop: "2px", marginBottom: "16px" }}>
             {file
               ? `Selected file: ${file.name}`
@@ -367,12 +454,48 @@ function ImportTradesPage() {
             <button type="button" onClick={confirmImport} style={styles.secondaryButton} disabled={confirmDisabled}>
               {isConfirming ? "Importing..." : "Confirm Import"}
             </button>
+            <button
+              type="button"
+              onClick={() => setShowImportNotes((prev) => !prev)}
+              style={styles.ghostButton}
+            >
+              {showImportNotes ? "Hide Import Notes" : "Add Import Notes"}
+            </button>
             {!access.isPremium ? (
-              <button type="button" onClick={() => navigate("/settings")} style={styles.ghostButton}>
+              <button type="button" onClick={handleUpgradeToPro} style={styles.ghostButton}>
                 Upgrade to Pro
               </button>
             ) : null}
           </div>
+
+          {showImportNotes ? (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "14px",
+                borderRadius: "16px",
+                background: "var(--app-card-muted)",
+                border: "1px solid var(--app-card-border)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "var(--app-text)",
+                  marginBottom: "8px",
+                }}
+              >
+                Import Notes
+              </div>
+              <textarea
+                value={importNotes}
+                onChange={(e) => setImportNotes(e.target.value)}
+                placeholder="Add context for this import, week, or trading period."
+                style={{ ...styles.textarea, marginBottom: 0, minHeight: "120px" }}
+              />
+            </div>
+          ) : null}
         </div>
 
         {preview ? (
@@ -520,6 +643,7 @@ function ImportTradesPage() {
           </div>
         ) : null}
       </div>
+      ) : null}
     </AppShell>
   );
 }

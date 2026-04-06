@@ -1,9 +1,11 @@
 const express = require("express");
 const multer = require("multer");
 const auth = require("../middleware/auth");
+const requirePro = require("../middleware/requirePro");
 const Trade = require("../models/trade");
-const User = require("../models/user");
 const ImportBatch = require("../models/importBatch");
+const Folder = require("../models/folder");
+const { hasPremiumAccess } = require("../utils/premiumAccess");
 const {
   SOURCE_OPTIONS,
   buildImportResponse,
@@ -35,10 +37,6 @@ const upload = multer({
   },
 });
 
-async function getPremiumAccess(userId) {
-  return true; // TEMP: allow all users for testing
-}
-
 async function buildPreviewPayload({ userId, file, source }) {
   const parsed = parseImportFile(file.buffer, source, file.originalname || "");
   const existingTrades = await Trade.find({ userId }).select(
@@ -55,7 +53,7 @@ async function buildPreviewPayload({ userId, file, source }) {
 
 router.get("/access", auth, async (req, res) => {
   try {
-    const isPremium = await getPremiumAccess(req.user.id);
+    const isPremium = await hasPremiumAccess(req.user.id);
 
     return res.json({
       isPremium,
@@ -66,14 +64,14 @@ router.get("/access", auth, async (req, res) => {
   }
 });
 
-router.post("/preview", auth, upload.single("file"), async (req, res) => {
+router.post("/preview", auth, requirePro, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "CSV file is required" });
     }
 
     const source = normalizeSource(req.body.source);
-    const isPremium = await getPremiumAccess(req.user.id);
+    const isPremium = await hasPremiumAccess(req.user.id);
     const { parsed, classified } = await buildPreviewPayload({
       userId: req.user.id,
       file: req.file,
@@ -100,21 +98,24 @@ router.post("/preview", auth, upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/confirm", auth, upload.single("file"), async (req, res) => {
+router.post("/confirm", auth, requirePro, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "CSV file is required" });
     }
 
-    const isPremium = await getPremiumAccess(req.user.id);
-    if (!isPremium) {
-      return res.status(403).json({
-        message:
-          "Preview your import for free. Upgrade to Pro to confirm and import all valid trades.",
-      });
-    }
+    const isPremium = await hasPremiumAccess(req.user.id);
 
     const source = normalizeSource(req.body.source);
+    const folderId = String(req.body.folderId || "").trim();
+
+    if (folderId) {
+      const folder = await Folder.findOne({ _id: folderId, userId: req.user.id });
+      if (!folder) {
+        return res.status(404).json({ message: "Folder not found" });
+      }
+    }
+
     const { parsed, classified } = await buildPreviewPayload({
       userId: req.user.id,
       file: req.file,
@@ -130,11 +131,12 @@ router.post("/confirm", auth, upload.single("file"), async (req, res) => {
       duplicateCount: classified.duplicateRows.length,
       skippedCount: parsed.skippedRows.length,
       importedCount: classified.readyTrades.length,
+      notes: String(req.body.importNotes || ""),
     });
 
     if (classified.readyTrades.length > 0) {
       const docs = classified.readyTrades.map((trade) =>
-        buildTradeDocument(req.user.id, String(batch._id), trade)
+        buildTradeDocument(req.user.id, String(batch._id), trade, folderId)
       );
       await Trade.insertMany(docs);
     }
@@ -165,21 +167,24 @@ router.post("/confirm", auth, upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/csv", auth, upload.single("file"), async (req, res) => {
+router.post("/csv", auth, requirePro, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "CSV file is required" });
     }
 
-    const isPremium = await getPremiumAccess(req.user.id);
-    if (!isPremium) {
-      return res.status(403).json({
-        message:
-          "Preview your import for free. Upgrade to Pro to confirm and import all valid trades.",
-      });
-    }
+    const isPremium = await hasPremiumAccess(req.user.id);
 
     const source = normalizeSource(req.body.source);
+    const folderId = String(req.body.folderId || "").trim();
+
+    if (folderId) {
+      const folder = await Folder.findOne({ _id: folderId, userId: req.user.id });
+      if (!folder) {
+        return res.status(404).json({ message: "Folder not found" });
+      }
+    }
+
     const { parsed, classified } = await buildPreviewPayload({
       userId: req.user.id,
       file: req.file,
@@ -196,10 +201,11 @@ router.post("/csv", auth, upload.single("file"), async (req, res) => {
         duplicateCount: classified.duplicateRows.length,
         skippedCount: parsed.skippedRows.length,
         importedCount: classified.readyTrades.length,
+        notes: String(req.body.importNotes || ""),
       });
 
       const docs = classified.readyTrades.map((trade) =>
-        buildTradeDocument(req.user.id, String(batch._id), trade)
+        buildTradeDocument(req.user.id, String(batch._id), trade, folderId)
       );
       await Trade.insertMany(docs);
 

@@ -22,7 +22,19 @@ const DEFAULT_POINT_VALUES = {
   QQQ: 1,
 };
 
-const SOURCE_OPTIONS = ["apex", "topstep", "generic"];
+const SOURCE_OPTIONS = [
+  "apex",
+  "topstep",
+  "alpha-futures",
+  "take-profit-trader",
+  "my-funded-futures",
+  "bulenox",
+  "earn2trade",
+  "tradeday",
+  "tickticktrader",
+  "funded-futures-network",
+  "generic",
+];
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -32,6 +44,14 @@ function normalizeSource(source) {
   const value = cleanText(source).toLowerCase();
   if (value === "apex") return "apex";
   if (value === "topstep") return "topstep";
+  if (value === "alpha-futures") return "alpha-futures";
+  if (value === "take-profit-trader") return "take-profit-trader";
+  if (value === "my-funded-futures") return "my-funded-futures";
+  if (value === "bulenox") return "bulenox";
+  if (value === "earn2trade") return "earn2trade";
+  if (value === "tradeday") return "tradeday";
+  if (value === "tickticktrader") return "tickticktrader";
+  if (value === "funded-futures-network") return "funded-futures-network";
   return "generic";
 }
 
@@ -39,6 +59,14 @@ function getSourceLabel(source) {
   const normalized = normalizeSource(source);
   if (normalized === "apex") return "Apex";
   if (normalized === "topstep") return "Topstep";
+  if (normalized === "alpha-futures") return "Alpha Futures";
+  if (normalized === "take-profit-trader") return "Take Profit Trader";
+  if (normalized === "my-funded-futures") return "My Funded Futures";
+  if (normalized === "bulenox") return "Bulenox";
+  if (normalized === "earn2trade") return "Earn2Trade";
+  if (normalized === "tradeday") return "TradeDay";
+  if (normalized === "tickticktrader") return "TickTickTrader";
+  if (normalized === "funded-futures-network") return "Funded Futures Network";
   return "Generic CSV";
 }
 
@@ -413,6 +441,38 @@ function parseTopstepCsv(headers, rows) {
   return parseRowsForSource("topstep", headers, rows);
 }
 
+function parseAlphaFuturesCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseTakeProfitTraderCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseMyFundedFuturesCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseBulenoxCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseEarn2TradeCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseTradeDayCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseTickTickTraderCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
+function parseFundedFuturesNetworkCsv(headers, rows) {
+  return parseRowsForSource("generic", headers, rows);
+}
+
 function parseGenericCsv(headers, rows) {
   return parseRowsForSource("generic", headers, rows);
 }
@@ -432,6 +492,14 @@ function parseImportFile(buffer, source, fileName = "") {
 
   if (normalizedSource === "apex") result = parseApexCsv(headers, rows);
   else if (normalizedSource === "topstep") result = parseTopstepCsv(headers, rows);
+  else if (normalizedSource === "alpha-futures") result = parseAlphaFuturesCsv(headers, rows);
+  else if (normalizedSource === "take-profit-trader") result = parseTakeProfitTraderCsv(headers, rows);
+  else if (normalizedSource === "my-funded-futures") result = parseMyFundedFuturesCsv(headers, rows);
+  else if (normalizedSource === "bulenox") result = parseBulenoxCsv(headers, rows);
+  else if (normalizedSource === "earn2trade") result = parseEarn2TradeCsv(headers, rows);
+  else if (normalizedSource === "tradeday") result = parseTradeDayCsv(headers, rows);
+  else if (normalizedSource === "tickticktrader") result = parseTickTickTraderCsv(headers, rows);
+  else if (normalizedSource === "funded-futures-network") result = parseFundedFuturesNetworkCsv(headers, rows);
   else result = parseGenericCsv(headers, rows);
 
   return {
@@ -525,7 +593,7 @@ function classifyTradesForImport({ userId, parsedTrades, existingTrades }) {
   };
 }
 
-function buildTradeDocument(userId, batchId, trade) {
+function buildTradeDocument(userId, batchId, trade, folderId = "") {
   return {
     userId,
     symbol: trade.symbol,
@@ -551,6 +619,7 @@ function buildTradeDocument(userId, batchId, trade) {
     importBatchId: batchId,
     externalTradeId: trade.externalTradeId,
     importFingerprint: trade.importFingerprint,
+    folderId: folderId || "",
     entryTime: trade.entryTime,
     exitTime: trade.exitTime,
   };

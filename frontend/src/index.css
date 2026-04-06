@@ -85,6 +85,10 @@ canvas {
     margin-bottom: 6px !important;
   }
 
+  .app-shell-user-chip {
+    display: none !important;
+  }
+
   .app-shell-content {
     padding: 16px 12px 96px !important;
   }

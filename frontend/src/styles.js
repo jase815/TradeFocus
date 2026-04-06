@@ -192,6 +192,32 @@ const styles = {
     cursor: "pointer",
   },
 
+  proBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    background: "var(--app-primary-soft)",
+    border: "1px solid var(--app-primary-border)",
+    color: "var(--app-chip-text)",
+    fontSize: "11px",
+    fontWeight: 800,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+  },
+
+  lockedCard: {
+    background: "linear-gradient(180deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+    borderRadius: "22px",
+    padding: "clamp(18px, 3vw, 24px)",
+    boxShadow: "var(--app-shadow-card)",
+    border: "1px solid var(--app-card-border)",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+  },
+
   tradesHeader: {
     display: "flex",
     justifyContent: "space-between",

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useThemeMode } from "../context/ThemeContext";
+import { API_URL } from "../config";
+import { readResponsePayload } from "../utils/apiFeedback";
 
 const mobileNavItems = [
   { to: "/charts", label: "Charts", icon: "charts" },
@@ -117,6 +119,7 @@ function getNavIcon(icon, isActive) {
 
 function AppShell({ title, subtitle, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { themeMode, toggleThemeMode } = useThemeMode();
@@ -124,6 +127,47 @@ function AppShell({ title, subtitle, children }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchCurrentUser() {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await readResponsePayload(res);
+
+        if (!cancelled && res.ok) {
+          setCurrentUser({
+            username: data.username || "",
+            email: data.email || "",
+            subscriptionActive: !!data.subscriptionActive,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentUser(null);
+        }
+      }
+    }
+
+    fetchCurrentUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeMobileRoute = useMemo(() => {
     if (location.pathname === "/" || location.pathname === "/charts") {
@@ -152,6 +196,32 @@ function AppShell({ title, subtitle, children }) {
     border: isActive ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent",
     boxShadow: isActive ? "var(--app-shadow-glow)" : "none",
   });
+
+  const renderNavLabel = (label, isPro) => (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+      <span>{label}</span>
+      {isPro && !currentUser?.subscriptionActive ? (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2px 8px",
+            borderRadius: "999px",
+            background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            color: "#ffffff",
+            fontSize: "10px",
+            fontWeight: 800,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+          }}
+        >
+          Pro
+        </span>
+      ) : null}
+    </span>
+  );
 
   return (
     <div
@@ -295,6 +365,60 @@ function AppShell({ title, subtitle, children }) {
               flex: "1 1 280px",
             }}
           >
+            {currentUser?.username ? (
+              <div
+                className="app-shell-user-chip"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 14px",
+                  borderRadius: "14px",
+                  background: "linear-gradient(135deg, var(--app-card) 0%, var(--app-card-muted) 100%)",
+                  border: "1px solid var(--app-card-border)",
+                  boxShadow: "var(--app-shadow-soft)",
+                  minWidth: 0,
+                }}
+              >
+                <span
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "999px",
+                    background: "var(--app-success)",
+                    boxShadow: "0 0 14px color-mix(in srgb, var(--app-success) 40%, transparent)",
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--app-text-soft)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Logged in as
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "var(--app-text)",
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "160px",
+                    }}
+                  >
+                    {currentUser.username}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={toggleThemeMode}
@@ -479,22 +603,25 @@ function AppShell({ title, subtitle, children }) {
               to="/charts"
               style={navLinkStyle(location.pathname === "/" || location.pathname === "/charts")}
             >
-              Charts
+              {renderNavLabel("Charts", false)}
             </Link>
             <Link to="/calendar" style={navLinkStyle(location.pathname === "/calendar")}>
-              Calendar
+              {renderNavLabel("Calendar", false)}
+            </Link>
+            <Link to="/analytics" style={navLinkStyle(location.pathname === "/analytics")}>
+              {renderNavLabel("Analytics", true)}
             </Link>
             <Link to="/journal" style={navLinkStyle(location.pathname === "/journal")}>
-              Journal
+              {renderNavLabel("Journal", false)}
             </Link>
             <Link to="/add-trade" style={navLinkStyle(location.pathname === "/add-trade")}>
-              Add Trade
+              {renderNavLabel("Add Trade", false)}
             </Link>
             <Link to="/import-trades" style={navLinkStyle(location.pathname === "/import-trades")}>
-              Import Trades
+              {renderNavLabel("Import Trades", true)}
             </Link>
             <Link to="/settings" style={navLinkStyle(location.pathname === "/settings")}>
-              Settings
+              {renderNavLabel("Settings", false)}
             </Link>
 
             <div

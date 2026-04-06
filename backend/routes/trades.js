@@ -4,7 +4,9 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const Trade = require("../models/trade");
+const Folder = require("../models/folder");
 const auth = require("../middleware/auth");
+const requirePro = require("../middleware/requirePro");
 
 const uploadsDir = path.join(__dirname, "..", "uploads");
 
@@ -141,6 +143,7 @@ router.post("/", auth, upload.single("screenshot"), async (req, res) => {
       takeProfit: toNumber(req.body.takeProfit, null),
       profit,
       screenshot: req.file ? `/uploads/${req.file.filename}` : "",
+      folderId: req.body.folderId || "",
     });
 
     const savedTrade = await trade.save();
@@ -206,6 +209,7 @@ router.put("/:id", auth, upload.single("screenshot"), async (req, res) => {
       exit: toNumber(req.body.exit, null),
       stopLoss: toNumber(req.body.stopLoss, null),
       takeProfit: toNumber(req.body.takeProfit, null),
+      folderId: req.body.folderId || existingTrade.folderId || "",
     };
 
     const profit = calculateProfit(nextData);
@@ -249,6 +253,37 @@ router.put("/:id", auth, upload.single("screenshot"), async (req, res) => {
     res.json(updatedTrade);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.put("/:id/folder", auth, requirePro, async (req, res) => {
+  try {
+    const nextFolderId = String(req.body.folderId || "").trim();
+
+    if (nextFolderId) {
+      const folder = await Folder.findOne({
+        _id: nextFolderId,
+        userId: req.user.id,
+      });
+
+      if (!folder) {
+        return res.status(404).json({ message: "Folder not found" });
+      }
+    }
+
+    const updatedTrade = await Trade.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { folderId: nextFolderId },
+      { new: true }
+    );
+
+    if (!updatedTrade) {
+      return res.status(404).json({ message: "Trade not found" });
+    }
+
+    return res.json(updatedTrade);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 });
 
